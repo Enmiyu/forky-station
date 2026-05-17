@@ -238,6 +238,7 @@ public sealed class UnionSelectorSystem : EntitySystem
     {
         // bigger union leader wins
         var winner = source.Members.Count > target.Members.Count ? source : target;
+        // check if leader is still around lol
         var mergedLeader = winner.Leader != EntityUid.Invalid ? winner.Leader : target.Leader;
 
         foreach (var (member, info) in source.Members)
@@ -256,11 +257,8 @@ public sealed class UnionSelectorSystem : EntitySystem
         }
 
         target.Leader = mergedLeader;
-        var oldName = target.Name;
         target.Name = GenerateUnionName(target.Departments);
         unionsComp.Unions.Remove(source);
-
-        _sawmill.Info($"Merged '{source.Name}' ({source.Members.Count}) into '{oldName}' -> '{target.Name}' ({target.Members.Count}).");
     }
 
     private string GenerateUnionName(List<string> departments)
