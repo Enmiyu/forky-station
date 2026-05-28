@@ -1,0 +1,21 @@
+diff a/Content.Server/Station/Systems/StationSpawningSystem.cs b/Content.Server/Station/Systems/StationSpawningSystem.cs	(rejected hunks)
+@@ -1,8 +1,11 @@
++using Content.Server._Impstation.PersonalEconomy;
+ using Content.Server.Access.Systems;
+ using Content.Server.Humanoid;
+ using Content.Server.Mind;
+ using Content.Server.PDA;
+ using Content.Server.Station.Components;
++using Content.Shared._Impstation.PersonalEconomy.Components;
++using Content.Shared._Impstation.PersonalEconomy.Systems;
+ using Content.Shared.Access.Components;
+ using Content.Shared.Access.Systems;
+ using Content.Shared.CCVar;
+@@ -44,6 +47,7 @@ public sealed class StationSpawningSystem : SharedStationSpawningSystem
+     [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
+     [Dependency] private readonly MindSystem _mindSystem = default!;
+     [Dependency] private readonly GrammarSystem _grammar = default!; // imp
++    [Dependency] private readonly SharedBankingSystem _banking = null!; //imp
+ 
+     /// <summary>
+     /// Attempts to spawn a player character onto the given station.
