@@ -1,10 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Content.Shared._Impstation.PersonalEconomy.Components;
 using Content.Shared._Impstation.PersonalEconomy.Events;
-using Content.Shared.Administration;
 using Content.Shared.Examine;
-using Content.Shared.Interaction;
-using Content.Shared.Roles;
 using Robust.Shared.Timing;
 
 namespace Content.Shared._Impstation.PersonalEconomy.Systems;
@@ -17,6 +14,10 @@ public abstract class SharedBankingSystem : EntitySystem
     [Dependency] private readonly MetaDataSystem _metaData = null!;
     [Dependency] private readonly IGameTiming _timing = null!;
 
+    //lookup so we're not full-scanning every transaction
+    private readonly Dictionary<int, EntityUid> _accountsByAccess = new();
+    private readonly Dictionary<int, EntityUid> _accountsByTransfer = new();
+
     /// <inheritdoc/>
     public override void Initialize()
     {
@@ -25,6 +26,39 @@ public abstract class SharedBankingSystem : EntitySystem
         SubscribeLocalEvent<PosSystemComponent, UpdatePoSSettingsMessage>(OnPoSSettingsUpdate);
         SubscribeLocalEvent<PosSystemComponent, PoSTransactionSuccededMessage>(OnTransactionSucceded);
         SubscribeLocalEvent<PosSystemComponent, PoSTransactionFailedMessage>(OnTransactionFailed);
+
+        SubscribeLocalEvent<BankAccountComponent, ComponentStartup>(OnAccountStartup);
+        SubscribeLocalEvent<BankAccountComponent, ComponentShutdown>(OnAccountShutdown);
+    }
+
+    private void OnAccountStartup(Entity<BankAccountComponent> ent, ref ComponentStartup args)
+    {
+        _accountsByAccess[ent.Comp.AccessNumber] = ent;
+        _accountsByTransfer[ent.Comp.TransferNumber] = ent;
+    }
+
+    private void OnAccountShutdown(Entity<BankAccountComponent> ent, ref ComponentShutdown args)
+    {
+        _accountsByAccess.Remove(ent.Comp.AccessNumber);
+        _accountsByTransfer.Remove(ent.Comp.TransferNumber);
+    }
+
+    /// <summary>
+    /// makes sure cache is insync
+    /// </summary>
+    protected void ReindexAccount(Entity<BankAccountComponent> ent, AccessNumber oldAccess, TransferNumber oldTransfer)
+    {
+        if (oldAccess != ent.Comp.AccessNumber)
+        {
+            _accountsByAccess.Remove(oldAccess);
+            _accountsByAccess[ent.Comp.AccessNumber] = ent;
+        }
+
+        if (oldTransfer != ent.Comp.TransferNumber)
+        {
+            _accountsByTransfer.Remove(oldTransfer);
+            _accountsByTransfer[ent.Comp.TransferNumber] = ent;
+        }
     }
 
     private void OnTransactionFailed(Entity<PosSystemComponent> ent, ref PoSTransactionFailedMessage args)
@@ -125,36 +159,23 @@ public abstract class SharedBankingSystem : EntitySystem
     public bool TryGetAccountFromTransferNumber(TransferNumber transferNumber, [NotNullWhen(true)] out Entity<BankAccountComponent>? account)
     {
         account = null;
-
-        //todo cache this
-        var accountQuery = EntityQueryEnumerator<BankAccountComponent>();
-        while (accountQuery.MoveNext(out var uid, out var comp))
-        {
-            if (comp.TransferNumber == transferNumber)
-            {
-                account = (uid, comp);
-                return true;
-            }
-        }
-
-        return false;
+        if (!_accountsByTransfer.TryGetValue(transferNumber, out var uid))
+            return false;
+        if (!TryComp<BankAccountComponent>(uid, out var comp))
+            return false;
+        account = (uid, comp);
+        return true;
     }
 
     public bool TryGetAccount(AccessNumber accessNumber, [NotNullWhen(true)] out Entity<BankAccountComponent>? account)
     {
         account = null;
-
-        var accountQuery = EntityQueryEnumerator<BankAccountComponent>();
-        while (accountQuery.MoveNext(out var uid, out var comp))
-        {
-            if (comp.AccessNumber == accessNumber)
-            {
-                account = (uid, comp);
-                return true;
-            }
-        }
-
-        return false;
+        if (!_accountsByAccess.TryGetValue(accessNumber, out var uid))
+            return false;
+        if (!TryComp<BankAccountComponent>(uid, out var comp))
+            return false;
+        account = (uid, comp);
+        return true;
     }
 
     /// <summary>
