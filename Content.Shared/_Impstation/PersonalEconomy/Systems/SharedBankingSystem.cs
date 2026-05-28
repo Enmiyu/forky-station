@@ -99,6 +99,10 @@ public abstract class SharedBankingSystem : EntitySystem
 
     private bool VerifyTransaction(AccessNumber sender, TransferNumber recipient, int amount)
     {
+        //no Negative Cheese
+        if (amount <= 0)
+            return false;
+
         //return false if neither account exists
         if (!TryGetAccount(sender, out var senderAccount) ||
             !TryGetAccountFromTransferNumber(recipient, out var recipientAccount))
@@ -128,14 +132,15 @@ public abstract class SharedBankingSystem : EntitySystem
     private void AddTransaction(Entity<BankAccountComponent> account, string otherName, int amount, int from, string reason)
     {
         //limit reason length
-        if (reason.Length > 64) //todo make this length limit a cvar?
+        if (reason.Length > 64) //todo make this a cvar
             reason = reason[..64];
 
         var timestamp = _timing.CurTime.TotalSeconds;
         var transaction = new BankTransaction(from, otherName, amount, timestamp, reason);
         account.Comp.Transactions.Insert(0, transaction);
-        if (account.Comp.Transactions.Count > 10) //todo make the history limit a cvar?
-            account.Comp.Transactions.RemoveAt(10);
+        //keep at most 10
+        while (account.Comp.Transactions.Count > 10) //todo make this a cvar
+            account.Comp.Transactions.RemoveAt(account.Comp.Transactions.Count - 1);
 
         Dirty(account);
     }
@@ -189,6 +194,7 @@ public abstract class SharedBankingSystem : EntitySystem
             return;
 
         account.Value.Comp.Name = name;
+        Dirty(account.Value);
     }
 
     public virtual void SetAccountSalary(AccessNumber accessNumber, int salary)
@@ -197,6 +203,7 @@ public abstract class SharedBankingSystem : EntitySystem
             return;
 
         account.Value.Comp.Salary = salary;
+        Dirty(account.Value);
     }
 
     public virtual void SetAccountBalance(AccessNumber accessNumber, int balance)
@@ -205,6 +212,7 @@ public abstract class SharedBankingSystem : EntitySystem
             return;
 
         account.Value.Comp.Balance = balance;
+        Dirty(account.Value);
     }
 
     /// <summary>
