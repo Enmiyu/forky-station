@@ -21,7 +21,6 @@ public sealed partial class TransactionInfoBox : Control
 
     public TransactionInfoBox(TransferNumber other, string name, int amount, double timestamp, string reason)
     {
-
         RobustXamlLoader.Load(this);
 
         Other = other;
@@ -30,15 +29,19 @@ public sealed partial class TransactionInfoBox : Control
         Timestamp = timestamp;
         Reason = reason;
 
-        TransferNoLabel.Text = $"#{other.Number:0000}";
-        TimestampLabel.Text = $@"{TimeSpan.FromSeconds(timestamp):hh\:mm\:ss}";
-        AmountLabel.Text = $"{amount:n0}";
+        DescriptionLabel.Text = !string.IsNullOrWhiteSpace(reason)
+            ? reason
+            : Loc.GetString("nanobank-transaction-counterparty", ("name", name), ("number", $"{other.Number:0000}"));
 
-        //todo proper custom tooltipsupplier for this
-        //todo locstringify this
+        var signed = amount < 0
+            ? Loc.GetString("nanobank-transaction-amount-out", ("amount", $"{int.Abs(amount):n0}"))
+            : Loc.GetString("nanobank-transaction-amount-in", ("amount", $"{amount:n0}"));
+        AmountLabel.Text = signed;
+
+        CategoryLabel.Text = Loc.GetString(amount < 0 ? "nanobank-category-purchase" : "nanobank-category-deposit");
+
         ToolTip = amount < 0
-            ? $"You sent {OtherName} (#{other.Number:0000}) ${int.Abs(amount)} spesitos for \"{reason}\""
-            : $"You recieved ${amount} spesitos from {OtherName} (#{other}) for \"{reason}\"";
+            ? Loc.GetString("nanobank-transaction-tooltip-out", ("name", name), ("number", $"{other.Number:0000}"), ("amount", int.Abs(amount)), ("reason", reason))
+            : Loc.GetString("nanobank-transaction-tooltip-in", ("name", name), ("number", $"{other.Number:0000}"), ("amount", amount), ("reason", reason));
     }
 }
-

@@ -11,7 +11,7 @@ using Robust.Shared.Timing;
 namespace Content.Client._Impstation.PersonalEconomy.UI.POS;
 
 [GenerateTypedNameReferences]
-public sealed partial class POSMenu : FancyWindow
+public sealed partial class PoSMenu : FancyWindow
 {
     [Dependency] private readonly IPlayerManager _playerMan = null!;
     [Dependency] private readonly IEntityManager _entityManager = null!;
@@ -21,7 +21,7 @@ public sealed partial class POSMenu : FancyWindow
 
     private bool _accountOpen;
 
-    public POSMenu()
+    public PoSMenu()
     {
         RobustXamlLoader.Load(this);
         IoCManager.InjectDependencies(this);

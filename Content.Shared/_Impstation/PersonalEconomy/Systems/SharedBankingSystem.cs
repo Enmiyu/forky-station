@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Content.Shared._Impstation.PersonalEconomy.Components;
 using Content.Shared._Impstation.PersonalEconomy.Events;
+using Content.Shared.Containers.ItemSlots;
 using Content.Shared.Examine;
+using Content.Shared.Hands.EntitySystems;
 using Robust.Shared.Timing;
 
 namespace Content.Shared._Impstation.PersonalEconomy.Systems;
@@ -13,6 +15,8 @@ public abstract class SharedBankingSystem : EntitySystem
 {
     [Dependency] private readonly MetaDataSystem _metaData = null!;
     [Dependency] private readonly IGameTiming _timing = null!;
+    [Dependency] private readonly ItemSlotsSystem _itemSlots = null!;
+    [Dependency] private readonly SharedHandsSystem _hands = null!;
 
     //lookup so we're not full-scanning every transaction
     private readonly Dictionary<int, EntityUid> _accountsByAccess = new();
@@ -23,6 +27,8 @@ public abstract class SharedBankingSystem : EntitySystem
     {
         SubscribeLocalEvent<BankCardComponent, ExaminedEvent>(OnExamined);
         SubscribeLocalEvent<ATMComponent, RequestTransactionMessage>(OnTransactionRequested);
+        SubscribeLocalEvent<ATMComponent, InsertCardMessage>(OnInsertCardRequested);
+        SubscribeLocalEvent<ATMComponent, EjectCardMessage>(OnEjectCardRequested);
         SubscribeLocalEvent<PosSystemComponent, UpdatePoSSettingsMessage>(OnPoSSettingsUpdate);
         SubscribeLocalEvent<PosSystemComponent, PoSTransactionSuccededMessage>(OnTransactionSucceded);
         SubscribeLocalEvent<PosSystemComponent, PoSTransactionFailedMessage>(OnTransactionFailed);
@@ -69,7 +75,11 @@ public abstract class SharedBankingSystem : EntitySystem
     private void OnTransactionSucceded(Entity<PosSystemComponent> ent, ref PoSTransactionSuccededMessage args)
     {
         //todo make this put out a "transaction succeded" signal
-        TryMakeTransaction(args.Account, ent.Comp.RecipientAccount, ent.Comp.Amount, ent.Comp.Reason);
+        //customer pays with the card in their hand
+        if (!TryGetHeldCard(args.Actor, out var card))
+            return;
+
+        TryMakeTransaction(card.Comp.AccessNumber, ent.Comp.RecipientAccount, ent.Comp.Amount, ent.Comp.Reason);
     }
 
     private void OnPoSSettingsUpdate(Entity<PosSystemComponent> ent, ref UpdatePoSSettingsMessage args)
@@ -83,7 +93,43 @@ public abstract class SharedBankingSystem : EntitySystem
 
     private void OnTransactionRequested(Entity<ATMComponent> ent, ref RequestTransactionMessage args)
     {
-        TryMakeTransaction(args.SenderAccount, args.RecipientAccount, args.Amount, args.Reason);
+        var cardUid = _itemSlots.GetItemOrNull(ent, ent.Comp.CardSlotId);
+        if (cardUid == null || !TryComp<BankCardComponent>(cardUid, out var card))
+            return;
+
+        TryMakeTransaction(card.AccessNumber, args.RecipientAccount, args.Amount, args.Reason);
+    }
+
+    private void OnInsertCardRequested(Entity<ATMComponent> ent, ref InsertCardMessage args)
+    {
+        if (!TryGetHeldCard(args.Actor, out var card))
+            return;
+
+        _itemSlots.TryInsert(ent, ent.Comp.CardSlotId, card.Owner, args.Actor);
+    }
+
+    private void OnEjectCardRequested(Entity<ATMComponent> ent, ref EjectCardMessage args)
+    {
+        // pickup into the player's hand or just falls on floor lol
+        if (!_itemSlots.TryGetSlot(ent, ent.Comp.CardSlotId, out var slot))
+            return;
+
+        _itemSlots.TryEjectToHands(ent, slot, args.Actor);
+    }
+
+    // they gotta actually hold the card in their hand
+    private bool TryGetHeldCard(EntityUid actor, out Entity<BankCardComponent> card)
+    {
+        card = default;
+        foreach (var held in _hands.EnumerateHeld(actor))
+        {
+            if (TryComp<BankCardComponent>(held, out var comp))
+            {
+                card = (held, comp);
+                return true;
+            }
+        }
+        return false;
     }
 
     public bool TryMakeTransaction(AccessNumber sender, TransferNumber recipient, int amount, string reason)
@@ -140,7 +186,9 @@ public abstract class SharedBankingSystem : EntitySystem
         account.Comp.Transactions.Insert(0, transaction);
         //keep at most 10
         while (account.Comp.Transactions.Count > 10) //todo make this a cvar
+        {
             account.Comp.Transactions.RemoveAt(account.Comp.Transactions.Count - 1);
+        }
 
         Dirty(account);
     }

@@ -1,7 +1,8 @@
-﻿using System.Numerics;
+using System.Numerics;
 using Content.Client._Impstation.PersonalEconomy.UI;
 using Content.Shared._Impstation.PersonalEconomy.Components;
 using Content.Shared._Impstation.PersonalEconomy.Events;
+using Content.Shared.Containers.ItemSlots;
 using Robust.Client.UserInterface;
 
 namespace Content.Client._Impstation.PersonalEconomy.BUI;
@@ -10,6 +11,7 @@ public sealed class ATMBoundUserInterface : BoundUserInterface
 {
 
     private readonly ClientBankingSystem _banking;
+    private readonly ItemSlotsSystem _itemSlots;
 
     private ATMMenu? _atmMenu;
     private TransactionMenu? _transactionMenu;
@@ -18,6 +20,7 @@ public sealed class ATMBoundUserInterface : BoundUserInterface
     public ATMBoundUserInterface(EntityUid owner, Enum uiKey) : base(owner, uiKey)
     {
         _banking = EntMan.System<ClientBankingSystem>();
+        _itemSlots = EntMan.System<ItemSlotsSystem>();
     }
 
     protected override void Open()
@@ -26,20 +29,10 @@ public sealed class ATMBoundUserInterface : BoundUserInterface
 
         _atmMenu = this.CreateWindow<ATMMenu>();
         _atmMenu.OnClose += ClearMenu;
+        _atmMenu.GetInsertedAccount = GetInsertedAccount;
 
-        _atmMenu.OnNumberEntered += s =>
-        {
-            if (!int.TryParse(s, out var i) || !_banking.TryGetAccount(i, out var account))
-            {
-                ClearMenu();
-                return;
-            }
-
-            _atmMenu.CreateInfoBoxForAccount(account.Value);
-            _account = account.Value;
-        };
-
-        _atmMenu.OnClearButtonPressed += ClearMenu;
+        _atmMenu.OnInsertCardPressed += () => SendPredictedMessage(new InsertCardMessage());
+        _atmMenu.OnEjectCardPressed += () => SendPredictedMessage(new EjectCardMessage());
 
         _transactionMenu = new TransactionMenu();
 
@@ -87,11 +80,9 @@ public sealed class ATMBoundUserInterface : BoundUserInterface
 
             _transactionMenu.ReallyConfirmButton.Disabled = false;
 
-            //not predicted because I'm handling all transaction things server-side
-            //might be annoying for some things? I can always move it to shared if it gets *too* annoying to deal with
+            // sender comes from the inserted card on the server
             SendPredictedMessage(
                 new RequestTransactionMessage(
-                    _account!.Value.Comp.AccessNumber,
                     int.Parse(_transactionMenu.TransferNumberBox.Text),
                     _transactionMenu.TransferAmount,
                     _transactionMenu.TransferReasonBox.Text)
@@ -113,9 +104,25 @@ public sealed class ATMBoundUserInterface : BoundUserInterface
         _transactionMenu?.Dispose();
     }
 
+    // reads the ATM's card slot and gets the acc
+    private Entity<BankAccountComponent>? GetInsertedAccount()
+    {
+        if (!EntMan.TryGetComponent<ATMComponent>(Owner, out var atm))
+            return null;
+
+        var cardUid = _itemSlots.GetItemOrNull(Owner, atm.CardSlotId);
+        if (cardUid == null || !EntMan.TryGetComponent<BankCardComponent>(cardUid, out var card))
+            return null;
+
+        if (!_banking.TryGetAccount(card.AccessNumber, out var account))
+            return null;
+
+        _account = account.Value;
+        return account.Value;
+    }
+
     private void ClearMenu()
     {
-        _atmMenu?.CreateInvalidInfoBox();
         _account = null;
         _transactionMenu?.Close();
     }
@@ -137,7 +144,7 @@ public sealed class ATMBoundUserInterface : BoundUserInterface
         }
 
         //do we have enough money to make the transfer?
-        if (_account!.Value.Comp.Balance < amount)
+        if (_account == null || _account.Value.Comp.Balance < amount)
         {
             _transactionMenu!.TransactionNotEnoughFundsLabel.Visible = true;
             verified = false;

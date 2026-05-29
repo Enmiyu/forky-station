@@ -10,7 +10,7 @@ public sealed class POSBoundUserInterface : BoundUserInterface
 {
 
     private ClientBankingSystem _banking;
-    private POSMenu? _menu;
+    private PoSMenu? _menu;
 
     public POSBoundUserInterface(EntityUid owner, Enum uiKey) : base(owner, uiKey)
     {
@@ -41,7 +41,7 @@ public sealed class POSBoundUserInterface : BoundUserInterface
         var recipientAccount = comp.RecipientAccount;
         var hasRecipient = recipientAccount != 0;
 
-        _menu = this.CreateWindow<POSMenu>();
+        _menu = this.CreateWindow<PoSMenu>();
 
         CreateRelevantBox(hasRecipient);
 
@@ -80,12 +80,12 @@ public sealed class POSBoundUserInterface : BoundUserInterface
                     if (!VerifyTransaction(localComp.RecipientAccount, userAccount, localComp.Amount))
                     {
                         box.NoFundsLabel.Visible = true;
-                        SendPredictedMessage(new PoSTransactionFailedMessage(userAccount));
+                        SendPredictedMessage(new PoSTransactionFailedMessage());
                     }
                     else
                     {
                         box.NoFundsLabel.Visible = false;
-                        SendPredictedMessage(new PoSTransactionSuccededMessage(userAccount));
+                        SendPredictedMessage(new PoSTransactionSuccededMessage());
                         Close();
                     }
                 };

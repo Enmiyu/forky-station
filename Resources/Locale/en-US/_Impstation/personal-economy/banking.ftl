@@ -13,7 +13,24 @@ atm-machine-account-access-number-title = Access Number: {$number}
 atm-machine-account-transfer-number-title = Transfer Number: {$number}
 atm-machine-account-balance-title = Balance: ${$balance}
 atm-machine-no-transactions = This Account Has Made No Transactions
-atm-invalid-account-number = Please enter a valid account number or present a valid bank card
+atm-invalid-account-number = Please insert a bank card to continue
+atm-insert-card-button = Insert Card
+atm-eject-card-button = Eject Card
+
+#NanoBank branded stuff
+nanobank-title = NanoBank
+nanobank-tagline = The only bank you'll need.
+nanobank-welcome = Welcome, {$name}!
+nanobank-balance-label = Balance
+nanobank-balance-amount = N$ {$balance}
+nanobank-recent-transactions = Recent Transactions
+nanobank-transaction-amount-in = +N$ {$amount}
+nanobank-transaction-amount-out = -N$ {$amount}
+nanobank-transaction-counterparty = {$name} #{$number}
+nanobank-category-purchase = Purchase
+nanobank-category-deposit = Deposit
+nanobank-transaction-tooltip-in = You received N$ {$amount} from {$name} (#{$number}) for "{$reason}"
+nanobank-transaction-tooltip-out = You sent N$ {$amount} to {$name} (#{$number}) for "{$reason}"
 
 transactions-container-title = Transactions
 transfer-funds-button-title = Transfer Funds
