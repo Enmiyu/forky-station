@@ -1,5 +1,6 @@
 using Content.Client.CharacterInfo;
 using Content.Shared._Impstation.PersonalEconomy.Components;
+using Content.Shared._Impstation.PersonalEconomy.Events;
 using Content.Shared._Impstation.PersonalEconomy.Systems;
 using Content.Shared.Inventory;
 using Content.Shared.PDA;
@@ -11,14 +12,24 @@ public sealed class ClientBankingSystem : SharedBankingSystem
 {
     [Dependency] private readonly InventorySystem _inventory = default!;
 
+    private int? _playerPin;
+    private Label? _pinLabel;
+
     public override void Initialize()
     {
         base.Initialize();
 
         SubscribeLocalEvent<CharacterInfoSystem.GetCharacterInfoControlsEvent>(OnGetCharacterInfoControls);
+        SubscribeNetworkEvent<BankPinResponseEvent>(OnPinResponse);
     }
 
-    // adds the players account number and pin to character info so they always have it
+    private void OnPinResponse(BankPinResponseEvent ev)
+    {
+        _playerPin = ev.Pin;
+        _pinLabel?.Text = Loc.GetString("bank-character-pin", ("pin", $"{ev.Pin:0000}"));
+    }
+
+    // adds the player's account number and PIN to character info so they always have it
     private void OnGetCharacterInfoControls(ref CharacterInfoSystem.GetCharacterInfoControlsEvent ev)
     {
         if (GetOwnedAccount(ev.Entity) is not { } account)
@@ -38,15 +49,19 @@ public sealed class ClientBankingSystem : SharedBankingSystem
         {
             Text = Loc.GetString("bank-character-account", ("number", $"{account.Comp.AccountNumber.Number:000000}")),
         });
-        box.AddChild(new Label
+
+        _pinLabel = new Label
         {
-            Text = Loc.GetString("bank-character-pin", ("pin", $"{account.Comp.Pin.Number:0000}")),
-        });
+            Text = Loc.GetString("bank-character-pin", ("pin", _playerPin is { } p ? $"{p:0000}" : "----")),
+        };
+        box.AddChild(_pinLabel);
 
         ev.Controls.Add(box);
+
+        RaiseNetworkEvent(new RequestBankPinEvent());
     }
 
-    // finds the players account via the bank card in their PDA
+    // finds the player's account via the bank card in their PDA
     private Entity<BankAccountComponent>? GetOwnedAccount(EntityUid player)
     {
         if (!_inventory.TryGetSlotEntity(player, "id", out var idUid))

@@ -55,6 +55,8 @@ public sealed class ServerBankingSystem : SharedBankingSystem
         SubscribeLocalEvent<ATMComponent, WithdrawMessage>(OnWithdraw);
         SubscribeLocalEvent<ATMComponent, DepositMessage>(OnDeposit);
 
+        SubscribeNetworkEvent<RequestBankPinEvent>(OnRequestPin);
+
         PopulateSalaries();
     }
 
@@ -115,28 +117,58 @@ public sealed class ServerBankingSystem : SharedBankingSystem
     // the record key lives on the PDA in the id slot, which is also where the bank card is
     private void OnPlayerSpawnComplete(PlayerSpawnCompleteEvent ev)
     {
-        if (!_inventory.TryGetSlotEntity(ev.Mob, "id", out var idUid))
+        if (!TryGetOwnedAccount(ev.Mob, out var account))
             return;
 
-        if (!TryComp<StationRecordKeyStorageComponent>(idUid, out var keyStorage) || keyStorage.Key is not { } key)
+        // bind the account to this player so only they can be told the PIN later
+        account.Value.Comp.OwnerUserId = ev.Player.UserId;
+
+        // tell the owner their PIN once; it's never printed on the card, so this is how they learn it
+        _popup.PopupEntity(
+            Loc.GetString("bank-pin-notify",
+                ("account", $"{account.Value.Comp.AccountNumber.Number:000000}"),
+                ("pin", $"{account.Value.Comp.Pin.Number:0000}")),
+            ev.Mob, ev.Mob, PopupType.Medium);
+
+        // link the station record (for criminal-status pay withholding) if one exists
+        if (_inventory.TryGetSlotEntity(ev.Mob, "id", out var idUid)
+            && TryComp<StationRecordKeyStorageComponent>(idUid, out var keyStorage)
+            && keyStorage.Key is { } key)
+        {
+            account.Value.Comp.StationRecordId = key.Id;
+        }
+    }
+
+    // the pin needs to be kept secret so thats why we request it this way
+    private void OnRequestPin(RequestBankPinEvent ev, EntitySessionEventArgs args)
+    {
+        if (args.SenderSession.AttachedEntity is not { } player)
             return;
 
+        if (!TryGetOwnedAccount(player, out var account))
+            return;
+
+        if (account.Value.Comp.OwnerUserId != args.SenderSession.UserId)
+            return;
+
+        RaiseNetworkEvent(
+            new BankPinResponseEvent(account.Value.Comp.AccountNumber.Number, account.Value.Comp.Pin.Number),
+            args.SenderSession);
+    }
+
+    // resolves the account belonging to a player via the bank card in their PDA
+    private bool TryGetOwnedAccount(EntityUid player, [NotNullWhen(true)] out Entity<BankAccountComponent>? account)
+    {
+        account = null;
+
+        if (!_inventory.TryGetSlotEntity(player, "id", out var idUid))
+            return false;
         if (!TryComp<PdaComponent>(idUid, out var pda)
             || pda.BankCardSlot.ContainerSlot?.ContainedEntity is not { } card
             || !TryComp<BankCardComponent>(card, out var bankCard))
-            return;
+            return false;
 
-        if (TryGetAccount(bankCard.AccountNumber, out var account))
-        {
-            account.Value.Comp.StationRecordId = key.Id;
-
-            // tell the owner their PIN once; it's never printed on the card, so this is how they learn it
-            _popup.PopupEntity(
-                Loc.GetString("bank-pin-notify",
-                    ("account", $"{account.Value.Comp.AccountNumber.Number:000000}"),
-                    ("pin", $"{account.Value.Comp.Pin.Number:0000}")),
-                ev.Mob, ev.Mob, PopupType.Medium);
-        }
+        return TryGetAccount(bankCard.AccountNumber, out account);
     }
 
     // sums every PaymentSalaryPrototype a job appears in (e.g. base wage + hazard pay)

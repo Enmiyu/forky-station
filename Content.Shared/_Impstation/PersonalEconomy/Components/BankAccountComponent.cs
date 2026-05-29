@@ -1,4 +1,5 @@
 ﻿using Robust.Shared.GameStates;
+using Robust.Shared.Network;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared._Impstation.PersonalEconomy.Components;
@@ -14,8 +15,13 @@ public sealed partial class BankAccountComponent : Component
 
     [DataField, AutoNetworkedField]
     public AccountNumber AccountNumber;
-    [DataField, AutoNetworkedField]
+
+    // the pin should never be replicated to all clients
+    [DataField]
     public Pin Pin;
+
+    // store user id to tell proper player their pin
+    public NetUserId? OwnerUserId;
 
     [DataField, AutoNetworkedField]
     public int Balance = 0;
