@@ -1,11 +1,18 @@
+using System.Diagnostics.CodeAnalysis;
 using Content.Server.StationRecords.Systems;
+using Content.Server.Stack;
 using Content.Shared._Impstation.PersonalEconomy;
 using Content.Shared._Impstation.PersonalEconomy.Components;
+using Content.Shared._Impstation.PersonalEconomy.Events;
 using Content.Shared._Impstation.PersonalEconomy.Systems;
+using Content.Shared.Containers.ItemSlots;
 using Content.Shared.GameTicking;
+using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Inventory;
 using Content.Shared.PDA;
+using Content.Shared.Popups;
 using Content.Shared.Roles;
+using Content.Shared.Stacks;
 using Content.Shared.Station;
 using Content.Shared.StationRecords;
 using Robust.Server.GameStates;
@@ -25,8 +32,13 @@ public sealed class ServerBankingSystem : SharedBankingSystem
     [Dependency] private SharedStationSystem _station = null!;
     [Dependency] private IPrototypeManager _proto = null!;
     [Dependency] private InventorySystem _inventory = null!;
+    [Dependency] private StackSystem _stack = null!;
+    [Dependency] private ItemSlotsSystem _itemSlots = null!;
+    [Dependency] private SharedHandsSystem _hands = null!;
+    [Dependency] private SharedPopupSystem _popup = null!;
 
     private readonly EntProtoId _bankAccountProto = "BankAccount";
+    private readonly ProtoId<StackPrototype> _scripStack = "Scrip";
 
     // job, stacked salary
     private readonly Dictionary<string, int> _salaryByJob = new();
@@ -40,7 +52,63 @@ public sealed class ServerBankingSystem : SharedBankingSystem
         // after StationRecordsSystem so the record key is already stamped onto the PDA
         SubscribeLocalEvent<PlayerSpawnCompleteEvent>(OnPlayerSpawnComplete, after: [typeof(StationRecordsSystem)]);
 
+        SubscribeLocalEvent<ATMComponent, WithdrawMessage>(OnWithdraw);
+        SubscribeLocalEvent<ATMComponent, DepositMessage>(OnDeposit);
+
         PopulateSalaries();
+    }
+
+    private void OnWithdraw(Entity<ATMComponent> ent, ref WithdrawMessage args)
+    {
+        if (args.Amount <= 0)
+            return;
+
+        if (!TryGetSlotAccount(ent, out var account))
+            return;
+
+        // withdrawing requires the account PIN
+        if (args.Pin != account.Value.Comp.Pin.Number)
+            return;
+
+        if (account.Value.Comp.Balance < args.Amount)
+            return;
+
+        // take from account, log it, then hand over physical scrip
+        AdjustBalanceWithLog(account.Value.Comp.AccountNumber, -args.Amount, Loc.GetString("nanobank-cash"), Loc.GetString("nanobank-withdrawal-reason"));
+        var stack = _stack.SpawnNextToOrDrop(args.Amount, _scripStack, ent.Owner);
+        _hands.PickupOrDrop(args.Actor, stack);
+    }
+
+    private void OnDeposit(Entity<ATMComponent> ent, ref DepositMessage args)
+    {
+        if (!TryGetSlotAccount(ent, out var account))
+            return;
+
+        var total = 0;
+        foreach (var held in _hands.EnumerateHeld(args.Actor))
+        {
+            if (!TryComp<StackComponent>(held, out var stack) || stack.StackTypeId != _scripStack)
+                continue;
+
+            total += stack.Count;
+            QueueDel(held);
+        }
+
+        if (total <= 0)
+            return;
+
+        AdjustBalanceWithLog(account.Value.Comp.AccountNumber, total, Loc.GetString("nanobank-cash"), Loc.GetString("nanobank-deposit-reason"));
+    }
+
+    private bool TryGetSlotAccount(Entity<ATMComponent> ent, [NotNullWhen(true)] out Entity<BankAccountComponent>? account)
+    {
+        account = null;
+
+        var cardUid = _itemSlots.GetItemOrNull(ent, ent.Comp.CardSlotId);
+        if (cardUid == null || !TryComp<BankCardComponent>(cardUid, out var card))
+            return false;
+
+        return TryGetAccount(card.AccountNumber, out account);
     }
 
     // link the account to its owner's station record so payroll can read criminal status.
@@ -58,9 +126,16 @@ public sealed class ServerBankingSystem : SharedBankingSystem
             || !TryComp<BankCardComponent>(card, out var bankCard))
             return;
 
-        if (TryGetAccount(bankCard.AccessNumber, out var account))
+        if (TryGetAccount(bankCard.AccountNumber, out var account))
         {
             account.Value.Comp.StationRecordId = key.Id;
+
+            // tell the owner their PIN once; it's never printed on the card, so this is how they learn it
+            _popup.PopupEntity(
+                Loc.GetString("bank-pin-notify",
+                    ("account", $"{account.Value.Comp.AccountNumber.Number:000000}"),
+                    ("pin", $"{account.Value.Comp.Pin.Number:0000}")),
+                ev.Mob, ev.Mob, PopupType.Medium);
         }
     }
 
@@ -98,10 +173,9 @@ public sealed class ServerBankingSystem : SharedBankingSystem
     private void SetupID(Entity<BankCardComponent> ent)
     {
         var account = CreateNewAccount("Unknown", ResolveAccountParent(ent));
-        ent.Comp.AccessNumber = account.Comp.AccessNumber;
-        ent.Comp.TransferNumber = account.Comp.TransferNumber;
-        SetAccountSalary(account.Comp.AccessNumber, ent.Comp.Salary);
-        SetAccountBalance(account.Comp.AccessNumber, ent.Comp.StartingBalance);
+        ent.Comp.AccountNumber = account.Comp.AccountNumber;
+        SetAccountSalary(account.Comp.AccountNumber, ent.Comp.Salary);
+        SetAccountBalance(account.Comp.AccountNumber, ent.Comp.StartingBalance);
         Dirty(ent);
     }
 
@@ -120,19 +194,15 @@ public sealed class ServerBankingSystem : SharedBankingSystem
 
     public Entity<BankAccountComponent> CreateNewAccount(string name, EntityUid? parent)
     {
-        //generate a unique ID
+        //generate a unique account number (the public address)
         var accountNo = _random.Next(1, 1000000);
         while (TryGetAccount(accountNo, out _))
         {
             accountNo = _random.Next(1, 1000000);
         }
 
-        //generate a unique transfer number
-        var transferNo = _random.Next(1, 10000);
-        while (TryGetAccountFromTransferNumber(transferNo, out _))
-        {
-            transferNo = _random.Next(1, 10000);
-        }
+        //the PIN is a 4-digit secret; it doesn't need to be unique since it's never used for lookup
+        var pin = _random.Next(1000, 10000);
 
         var newAccount = Spawn(_bankAccountProto);
         if (parent != null)
@@ -149,12 +219,11 @@ public sealed class ServerBankingSystem : SharedBankingSystem
         //create new account
         var bankComp = Comp<BankAccountComponent>(newAccount);
 
-        var oldAccess = bankComp.AccessNumber;
-        var oldTransfer = bankComp.TransferNumber;
-        bankComp.AccessNumber = accountNo;
-        bankComp.TransferNumber = transferNo;
+        var oldNumber = bankComp.AccountNumber;
+        bankComp.AccountNumber = accountNo;
+        bankComp.Pin = pin;
         bankComp.Name = name;
-        ReindexAccount((newAccount, bankComp), oldAccess, oldTransfer);
+        ReindexAccount((newAccount, bankComp), oldNumber);
 
         //and send the comp back off to the client
         Dirty<BankAccountComponent>((newAccount, bankComp));

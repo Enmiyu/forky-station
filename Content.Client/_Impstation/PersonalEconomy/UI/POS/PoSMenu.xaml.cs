@@ -55,8 +55,8 @@ public sealed partial class PoSMenu : FancyWindow
                 continue;
 
             //set the entered number & invoke the number entered action
-            UIKeypad.SetEnteredNumber($"{comp.AccessNumber.Number:000000}");
-            OnNumberEntered?.Invoke($"{comp.AccessNumber.Number:000000}");
+            UIKeypad.SetEnteredNumber($"{comp.AccountNumber.Number:000000}");
+            OnNumberEntered?.Invoke($"{comp.AccountNumber.Number:000000}");
             break;
         }
     }

@@ -1,0 +1,134 @@
+- type: entity
+  parent: BaseItem
+  id: Scrip
+  name: scrip
+  description: Money that can be used exclusively on NanoTrasen stations.
+  components:
+  - type: Cash
+  - type: Item
+    shape:
+    - 0,0,1,0
+    storedOffset: 0,-2
+  - type: Material
+  - type: PhysicalComposition
+    materialComposition:
+      Scrip: 1
+  - type: StaticPrice
+    price: 0
+  - type: Stack
+    stackType: Scrip
+    count: 1
+    baseLayer: base
+    layerStates:
+    - cash
+    - cash_10
+    - cash_100
+    - cash_500
+    - cash_1000
+    - cash_5000
+    - cash_10000
+    - cash_25000
+    - cash_50000
+    - cash_100000
+    - cash_1000000
+    layerFunction: Threshold
+  - type: StackLayerThreshold
+    thresholds: [10, 100, 500, 1000, 5000, 10000, 25000, 50000, 100000, 1000000]
+  - type: Sprite
+    sprite: Objects/Economy/cash.rsi
+    state: cash
+    layers:
+    - state: cash
+      map: ["base"]
+  - type: Physics
+    bodyType: Dynamic
+  - type: Fixtures
+    fixtures:
+      fix1:
+        density: 30
+        shape:
+          !type:PhysShapeAabb
+          bounds: "-0.35,-0.2,0.25,0.1"
+        mask:
+        - ItemMask
+  - type: Appearance
+
+- type: material
+  id: Scrip
+  name: materials-scrip
+  unit: materials-unit-bill
+  stackEntity: Scrip
+  icon: { sprite: /Textures/Objects/Economy/cash.rsi, state: cash }
+  price: 1
+
+- type: stack
+  id: Scrip
+  name: stack-scrip
+  icon: { sprite: /Textures/Objects/Economy/cash.rsi, state: cash }
+  spawn: Scrip
+
+- type: entity
+  parent: Scrip
+  id: Scrip10
+  suffix: 10
+  components:
+  - type: Icon
+    sprite: Objects/Economy/cash.rsi
+    state: cash_10
+  - type: Stack
+    count: 10
+
+- type: entity
+  parent: Scrip
+  id: Scrip100
+  suffix: 100
+  components:
+  - type: Icon
+    sprite: Objects/Economy/cash.rsi
+    state: cash_100
+  - type: Stack
+    count: 100
+
+- type: entity
+  parent: Scrip
+  id: Scrip500
+  suffix: 500
+  components:
+  - type: Icon
+    sprite: Objects/Economy/cash.rsi
+    state: cash_500
+  - type: Stack
+    count: 500
+
+- type: entity
+  parent: Scrip
+  id: Scrip1000
+  suffix: 1000
+  components:
+  - type: Icon
+    sprite: Objects/Economy/cash.rsi
+    state: cash_1000
+  - type: Stack
+    count: 1000
+
+- type: entity
+  parent: Scrip
+  id: Scrip5000
+  suffix: 5000
+  components:
+  - type: Icon
+    sprite: Objects/Economy/cash.rsi
+    state: cash_5000
+  - type: Stack
+    count: 5000
+
+- type: entity
+  parent: Scrip
+  id: Scrip10000
+  suffix: 10000
+  components:
+  - type: Icon
+    sprite: Objects/Economy/cash.rsi
+    state: cash_10000
+  - type: Stack
+    count: 10000

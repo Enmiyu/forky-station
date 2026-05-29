@@ -35,7 +35,7 @@ public sealed class PayrollSystem : EntitySystem
         var account = _banking.CreateNewAccount(Loc.GetString("nanobank-station-bank"), ent.Owner);
         account.Comp.IsStationAccount = true;
         Dirty(account);
-        ent.Comp.StationAccount = account.Comp.AccessNumber;
+        ent.Comp.StationAccount = account.Comp.AccountNumber;
         ent.Comp.NextPayout = _timing.CurTime + ent.Comp.PayoutInterval;
         ent.Comp.Initialized = true;
         Dirty(ent);
@@ -67,7 +67,7 @@ public sealed class PayrollSystem : EntitySystem
         var query = EntityQueryEnumerator<BankAccountComponent>();
         while (query.MoveNext(out var uid, out var comp))
         {
-            if (!BelongsToStation(uid, station.Owner) || comp.AccessNumber == station.Comp.StationAccount)
+            if (!BelongsToStation(uid, station.Owner) || comp.AccountNumber == station.Comp.StationAccount)
                 continue;
             if (!ShouldWithhold(station.Owner, comp, out _))
                 eligible++; // only pay the station for crew that is nice :)
@@ -81,18 +81,18 @@ public sealed class PayrollSystem : EntitySystem
         query = EntityQueryEnumerator<BankAccountComponent>();
         while (query.MoveNext(out var uid, out var comp))
         {
-            if (!BelongsToStation(uid, station.Owner) || comp.AccessNumber == station.Comp.StationAccount)
+            if (!BelongsToStation(uid, station.Owner) || comp.AccountNumber == station.Comp.StationAccount)
                 continue;
             if (comp.Salary <= 0)
                 continue;
 
             if (ShouldWithhold(station.Owner, comp, out var reason))
             {
-                _banking.LogWithheld(comp.AccessNumber, reason);
+                _banking.LogWithheld(comp.AccountNumber, reason);
                 continue;
             }
 
-            _banking.TryMakeTransaction(station.Comp.StationAccount, comp.TransferNumber, comp.Salary, Loc.GetString("nanobank-salary-reason"));
+            _banking.TryMakeTransaction(station.Comp.StationAccount, comp.AccountNumber, comp.Salary, Loc.GetString("nanobank-salary-reason"));
         }
 
         //"Station" sender renders as a station announcement rather than a Central Command one

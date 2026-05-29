@@ -10,10 +10,10 @@ namespace Content.Shared._Impstation.PersonalEconomy.Events;
 /// <param name="amount"> the amount of money to be transferred</param>
 /// <param name="reason"> the reason for the transfer</param>
 [Serializable, NetSerializable]
-public sealed class RequestTransactionMessage(TransferNumber recipientAccount, int amount, string reason)
+public sealed class RequestTransactionMessage(AccountNumber recipientAccount, int amount, string reason)
     : BoundUserInterfaceMessage
 {
-    public TransferNumber RecipientAccount = recipientAccount;
+    public AccountNumber RecipientAccount = recipientAccount;
     public int Amount = amount;
     public string Reason = reason;
 }

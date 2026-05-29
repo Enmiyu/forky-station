@@ -12,6 +12,8 @@ public sealed partial class AccountInfoBox : BoxContainer
 {
     public Action? OnTransactionButtonPressed;
     public Action? OnEjectPressed;
+    public Action? OnDepositPressed;
+    public Action<int, int>? OnWithdrawPressed;
 
     private Entity<BankAccountComponent> _account;
 
@@ -28,6 +30,17 @@ public sealed partial class AccountInfoBox : BoxContainer
 
         TransferFundsButton.OnPressed += _ => OnTransactionButtonPressed?.Invoke();
         EjectCardButton.OnPressed += _ => OnEjectPressed?.Invoke();
+        DepositButton.OnPressed += _ => OnDepositPressed?.Invoke();
+        WithdrawButton.OnPressed += _ =>
+        {
+            if (int.TryParse(WithdrawAmountBox.Text, out var amount) && amount > 0
+                && int.TryParse(WithdrawPinBox.Text, out var pin))
+            {
+                OnWithdrawPressed?.Invoke(amount, pin);
+                WithdrawAmountBox.Clear();
+                WithdrawPinBox.Clear();
+            }
+        };
 
         WelcomeLabel.Text = Loc.GetString("nanobank-welcome", ("name", account.Comp.Name));
     }

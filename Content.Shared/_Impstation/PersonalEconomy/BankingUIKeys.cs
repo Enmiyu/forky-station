@@ -19,3 +19,9 @@ public enum AccountManagementUIKey : byte
 {
     Key
 }
+
+[Serializable, NetSerializable]
+public enum CurrencyExchangeUIKey : byte
+{
+    Key
+}

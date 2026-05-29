@@ -19,12 +19,12 @@ public sealed partial class AccountManagementMenu : FancyWindow
 
     private readonly ClientBankingSystem _banking;
 
-    public Action<AccessNumber, PaymentStatus, string>? OnSetStatus;
-    public Action<AccessNumber, int>? OnSetSalary;
-    public Action<AccessNumber, int>? OnGrantBonus;
+    public Action<AccountNumber, PaymentStatus, string>? OnSetStatus;
+    public Action<AccountNumber, int>? OnSetSalary;
+    public Action<AccountNumber, int>? OnGrantBonus;
     public Action? OnInsertCard;
     public Action? OnEjectCard;
-    public Action<AccessNumber>? OnWriteCard;
+    public Action<AccountNumber>? OnWriteCard;
     public Action<string, PaymentStatus, string>? OnSetDepartmentStatus;
     public Action<string, int>? OnGrantDepartmentBonus;
 
@@ -33,7 +33,7 @@ public sealed partial class AccountManagementMenu : FancyWindow
 
     private readonly Dictionary<int, CrewPaymentRow> _rows = new();
     private readonly Dictionary<string, DepartmentRow> _deptRows = new();
-    private AccessNumber? _selected;
+    private AccountNumber? _selected;
 
     public AccountManagementMenu()
     {
@@ -105,7 +105,7 @@ public sealed partial class AccountManagementMenu : FancyWindow
             var row = new CrewPaymentRow((uid, comp));
             row.OnPressed += Select;
             CrewListContainer.AddChild(row);
-            _rows[comp.AccessNumber] = row;
+            _rows[comp.AccountNumber] = row;
 
             if (comp.Department.Length != 0)
                 departments.Add(comp.Department);
@@ -153,7 +153,7 @@ public sealed partial class AccountManagementMenu : FancyWindow
         }
     }
 
-    private void Select(AccessNumber account)
+    private void Select(AccountNumber account)
     {
         _selected = account;
         if (_banking.TryGetAccount(account, out var ent))

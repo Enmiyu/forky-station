@@ -24,7 +24,7 @@ public sealed partial class StationPayrollComponent : Component
     /// The station has its own scrip account, and that is where people get paid from. 0 until its made.
     /// </summary>
     [DataField, AutoNetworkedField]
-    public AccessNumber StationAccount;
+    public AccountNumber StationAccount;
 
     /// <summary>
     /// The base amount of scrip added per cycle.

@@ -2,21 +2,24 @@
 bank-card-name = {$name}'s bank card
 bank-card-description = This bank card belongs to {$name}.
 bank-card-slot-name = Bank Card
-bank-card-examine-access-number = The card's access number is {$number}
-bank-card-examine-transfer-number = The card's transfer number is {$number}
-bank-card-examine-balance = The account's balance is {$balance} spesitos
-bank-card-examine-salary = The account's salary is {$salary} spesitos
+bank-card-examine-account-number = The account number is {$number}
+bank-card-examine-balance = The account's balance is {$balance} scrip
+bank-card-examine-salary = The account's salary is {$salary} scrip
+bank-pin-notify = Your bank account is #{$account}. Your PIN is {$pin} - keep it secret!
 
 #atm stuff
-atm-machine-window-title = Automated Teller Machine Machine
+atm-machine-window-title = Automated Teller Machine
 atm-machine-account-name-title = Welcome, {$name}!
 atm-machine-account-access-number-title = Access Number: {$number}
 atm-machine-account-transfer-number-title = Transfer Number: {$number}
 atm-machine-account-balance-title = Balance: ${$balance}
 atm-machine-no-transactions = This Account Has Made No Transactions
 atm-invalid-account-number = Please insert a bank card to continue
+atm-card-unprogrammed = This card is not programmed, take it to the Head of Personnel!
 atm-insert-card-button = Insert Card
 atm-eject-card-button = Eject Card
+atm-deposit-button = Deposit
+atm-withdraw-button = Withdraw
 
 #NanoBank branded stuff
 nanobank-title = NanoBank
@@ -98,6 +101,9 @@ nanobank-unknown-account = Unknown
 nanobank-placeholder = ---
 nanobank-station-bank = Station Bank
 nanobank-bonus-reason = Bonus
+nanobank-cash = Cash
+nanobank-deposit-reason = Deposit
+nanobank-withdrawal-reason = Withdrawal
 nanobank-salary-reason = Salary
 nanobank-withheld = Withheld
 nanobank-withheld-reason = Withheld: {$reason}
@@ -105,6 +111,20 @@ nanobank-withheld-wanted = Wanted
 nanobank-withheld-detained = Detained
 nanobank-payout-announcement = Pay is out! Check your salaries for correct amounts.
 nanobank-payout-sender = Station
+
+#currency exchange
+currency-exchange-window-title = Currency Exchange
+currency-exchange-slot-name = Cash
+currency-exchange-title = Spesos {"<->"} Scrip
+currency-exchange-rate = Conversion tax: {$tax}%
+currency-exchange-empty = Insert spesos or scrip to begin.
+currency-exchange-inserted = Inserted: {$count} {$currency}
+currency-exchange-preview = → {$amount} {$currency}
+currency-exchange-spesos = spesos
+currency-exchange-scrip = scrip
+currency-exchange-insert-button = Insert Cash
+currency-exchange-eject-button = Eject
+currency-exchange-convert-button = Convert
 
 #card programming
 nanobank-program-card-button = Program Card

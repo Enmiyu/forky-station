@@ -15,9 +15,10 @@
 
     <Control VerticalExpand="True"/>
 
-    <Label Text="{Loc atm-invalid-account-number}" HorizontalAlignment="Center"/>
+    <Label Name="MessageLabel" Text="{Loc atm-invalid-account-number}" HorizontalAlignment="Center" Align="Center"/>
     <Control MinHeight="8"/>
     <Button Name="InsertCardButton" Text="{Loc atm-insert-card-button}" HorizontalAlignment="Center"/>
+    <Button Name="EjectCardButton" Text="{Loc atm-eject-card-button}" HorizontalAlignment="Center" Visible="False"/>
 
     <Control VerticalExpand="True"/>
 </BoxContainer>

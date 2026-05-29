@@ -10,10 +10,7 @@ public sealed partial class BankCardComponent : Component
 {
 
     [DataField, AutoNetworkedField]
-    public AccessNumber AccessNumber;
-
-    [DataField, AutoNetworkedField]
-    public TransferNumber TransferNumber;
+    public AccountNumber AccountNumber;
 
     [DataField, AutoNetworkedField]
     public string Name = "Unknown";

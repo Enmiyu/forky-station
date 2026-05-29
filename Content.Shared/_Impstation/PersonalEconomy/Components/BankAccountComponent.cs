@@ -13,9 +13,9 @@ public sealed partial class BankAccountComponent : Component
     public string Name = string.Empty;
 
     [DataField, AutoNetworkedField]
-    public AccessNumber AccessNumber;
+    public AccountNumber AccountNumber;
     [DataField, AutoNetworkedField]
-    public TransferNumber TransferNumber;
+    public Pin Pin;
 
     [DataField, AutoNetworkedField]
     public int Balance = 0;
@@ -66,7 +66,7 @@ public enum PaymentStatus : byte
 [DataDefinition, Serializable, NetSerializable]
 public sealed partial class BankTransaction
 {
-    public BankTransaction(TransferNumber other, string name, int amount, double timestamp, string reason)
+    public BankTransaction(AccountNumber other, string name, int amount, double timestamp, string reason)
     {
         OtherAccount = other;
         Name = name;
@@ -75,7 +75,7 @@ public sealed partial class BankTransaction
         Reason = reason;
     }
 
-    [DataField] public TransferNumber OtherAccount= 0;
+    [DataField] public AccountNumber OtherAccount = 0;
     [DataField] public string Name = ""; //technically this doesn't need to be stored here since both the client & server will know what all account names are at all times, but I like it keeping track of renambed accounts for scams and such
     [DataField] public int Amount = 0;
     [DataField] public double Timestamp = 0;
@@ -86,33 +86,33 @@ public sealed partial class BankTransaction
 /// Used to enforce transfer number / access number constraints. technically I think they can just be freely casted between because they can both go to and from int but this makes me feel smart.
 /// </summary>
 [DataDefinition, Serializable, NetSerializable]
-public partial struct AccessNumber : IEquatable<AccessNumber>
+public partial struct AccountNumber : IEquatable<AccountNumber>
 {
     public readonly int Number;
 
-    public AccessNumber(int number)
+    public AccountNumber(int number)
     {
         Number = number;
     }
 
-    public static implicit operator int(AccessNumber number)
+    public static implicit operator int(AccountNumber number)
     {
         return number.Number;
     }
 
-    public static implicit operator AccessNumber(int number)
+    public static implicit operator AccountNumber(int number)
     {
-        return new AccessNumber(number);
+        return new AccountNumber(number);
     }
 
-    public bool Equals(AccessNumber other)
+    public bool Equals(AccountNumber other)
     {
         return Number == other.Number;
     }
 
     public override bool Equals(object? obj)
     {
-        return obj is AccessNumber other && Equals(other);
+        return obj is AccountNumber other && Equals(other);
     }
 
     public override int GetHashCode()
@@ -122,33 +122,33 @@ public partial struct AccessNumber : IEquatable<AccessNumber>
 }
 
 [DataDefinition, Serializable, NetSerializable]
-public partial struct TransferNumber : IEquatable<TransferNumber>
+public partial struct Pin : IEquatable<Pin>
 {
     public readonly int Number;
 
-    public TransferNumber(int number)
+    public Pin(int number)
     {
         Number = number;
     }
 
-    public static implicit operator int(TransferNumber number)
+    public static implicit operator int(Pin number)
     {
         return number.Number;
     }
 
-    public static implicit operator TransferNumber(int number)
+    public static implicit operator Pin(int number)
     {
-        return new TransferNumber(number);
+        return new Pin(number);
     }
 
-    public bool Equals(TransferNumber other)
+    public bool Equals(Pin other)
     {
         return Number == other.Number;
     }
 
     public override bool Equals(object? obj)
     {
-        return obj is TransferNumber other && Equals(other);
+        return obj is Pin other && Equals(other);
     }
 
     public override int GetHashCode()

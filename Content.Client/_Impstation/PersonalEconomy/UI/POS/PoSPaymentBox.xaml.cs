@@ -27,10 +27,10 @@ public sealed partial class PoSPaymentBox : Control
         CancelButton.OnPressed += _ => TransactionCancelled?.Invoke();
     }
 
-    public void FillOutDetails(string name, TransferNumber number, int amount, string reason)
+    public void FillOutDetails(string name, AccountNumber number, int amount, string reason)
     {
         NameAndNumberLabel.Text =
-            Loc.GetString("pos-payment-name-and-number", ("name", name), ("number", $"{number.Number:0000}"));
+            Loc.GetString("pos-payment-name-and-number", ("name", name), ("number", $"{number.Number:000000}"));
         ChargeAmountLabel.Text = Loc.GetString("pos-payment-spesito-amount", ("amount", $"{amount:n0}"));
         ChargeReasonLabel.Text =
             string.IsNullOrEmpty(reason) ? "" : Loc.GetString("pos-payment-reason", ("reason", reason));

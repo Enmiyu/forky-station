@@ -233,16 +233,16 @@ public sealed class StationSpawningSystem : SharedStationSpawningSystem
             TryComp<BankCardComponent>(containedCard, out var bankCardComp)) //is it a bank card?
         {
             var realCardRealTrue = (containedCard, bankCardComp);
-            _banking.SetAccountName(bankCardComp.AccessNumber, characterName);
-            _banking.UpdateCardDetails(realCardRealTrue, bankCardComp.AccessNumber);
+            _banking.SetAccountName(bankCardComp.AccountNumber, characterName);
+            _banking.UpdateCardDetails(realCardRealTrue, bankCardComp.AccountNumber);
 
             // salary comes from job PaymentSalaryPrototype entries rather than a flat val
-            _banking.SetAccountSalary(bankCardComp.AccessNumber, _banking.GetSalaryForJob(jobPrototype.ID));
+            _banking.SetAccountSalary(bankCardComp.AccountNumber, _banking.GetSalaryForJob(jobPrototype.ID));
 
             // we can easily group accounts by this manner, since theres no easy way
             // to track what job a player currently has. maybe make that editable thru hop?
             if (TryGetPrimaryDepartment(jobPrototype.ID, out var department, out var isCommand))
-                _banking.SetAccountDepartment(bankCardComp.AccessNumber, department, isCommand);
+                _banking.SetAccountDepartment(bankCardComp.AccountNumber, department, isCommand);
         }
         //imp edit end
 

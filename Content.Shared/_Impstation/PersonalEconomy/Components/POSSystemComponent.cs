@@ -9,7 +9,7 @@ namespace Content.Shared._Impstation.PersonalEconomy.Components;
 public sealed partial class PosSystemComponent : Component
 {
     [AutoNetworkedField]
-    public TransferNumber RecipientAccount = 0;
+    public AccountNumber RecipientAccount = 0;
 
     [AutoNetworkedField]
     public int Amount = 0;

@@ -12,10 +12,15 @@ public sealed partial class ATMMenu : FancyWindow
     public Action? OnTransactionButtonPressed;
     public Action? OnInsertCardPressed;
     public Action? OnEjectCardPressed;
+    public Action? OnDepositPressed;
+    public Action<int, int>? OnWithdrawPressed;
 
     public Func<Entity<BankAccountComponent>?>? GetInsertedAccount;
+    // true when a card is in the slot, regardless of whether it has an account
+    public Func<bool>? IsCardInserted;
 
     private EntityUid? _shownAccount;
+    private NoAccountInfoBox? _noAccountBox;
 
     public ATMMenu()
     {
@@ -31,8 +36,10 @@ public sealed partial class ATMMenu : FancyWindow
 
         if (inserted == null)
         {
-            if (_shownAccount != null)
+            if (_noAccountBox == null)
                 CreateInvalidInfoBox();
+
+            _noAccountBox?.SetUnprogrammed(IsCardInserted?.Invoke() ?? false);
             return;
         }
 
@@ -46,9 +53,10 @@ public sealed partial class ATMMenu : FancyWindow
     {
         ClearInfoBox();
 
-        var infoBox = new NoAccountInfoBox();
-        infoBox.OnInsertCardPressed += () => OnInsertCardPressed?.Invoke();
-        AccountInfoContainer.AddChild(infoBox);
+        _noAccountBox = new NoAccountInfoBox();
+        _noAccountBox.OnInsertCardPressed += () => OnInsertCardPressed?.Invoke();
+        _noAccountBox.OnEjectCardPressed += () => OnEjectCardPressed?.Invoke();
+        AccountInfoContainer.AddChild(_noAccountBox);
     }
 
     public void CreateInfoBoxForAccount(Entity<BankAccountComponent> account)
@@ -58,6 +66,8 @@ public sealed partial class ATMMenu : FancyWindow
         var infobox = new AccountInfoBox(account);
         infobox.OnTransactionButtonPressed += () => OnTransactionButtonPressed?.Invoke();
         infobox.OnEjectPressed += () => OnEjectCardPressed?.Invoke();
+        infobox.OnDepositPressed += () => OnDepositPressed?.Invoke();
+        infobox.OnWithdrawPressed += (amount, pin) => OnWithdrawPressed?.Invoke(amount, pin);
         AccountInfoContainer.AddChild(infobox);
         _shownAccount = account.Owner;
     }
@@ -66,5 +76,6 @@ public sealed partial class ATMMenu : FancyWindow
     {
         AccountInfoContainer.RemoveAllChildren();
         _shownAccount = null;
+        _noAccountBox = null;
     }
 }

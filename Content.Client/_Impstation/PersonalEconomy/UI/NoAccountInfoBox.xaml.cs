@@ -8,11 +8,20 @@ namespace Content.Client._Impstation.PersonalEconomy.UI;
 public sealed partial class NoAccountInfoBox : BoxContainer
 {
     public Action? OnInsertCardPressed;
+    public Action? OnEjectCardPressed;
 
     public NoAccountInfoBox()
     {
         RobustXamlLoader.Load(this);
 
         InsertCardButton.OnPressed += _ => OnInsertCardPressed?.Invoke();
+        EjectCardButton.OnPressed += _ => OnEjectCardPressed?.Invoke();
+    }
+
+    public void SetUnprogrammed(bool unprogrammed)
+    {
+        MessageLabel.Text = Loc.GetString(unprogrammed ? "atm-card-unprogrammed" : "atm-invalid-account-number");
+        InsertCardButton.Visible = !unprogrammed;
+        EjectCardButton.Visible = unprogrammed;
     }
 }

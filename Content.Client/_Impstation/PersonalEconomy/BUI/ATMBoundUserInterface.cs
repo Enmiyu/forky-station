@@ -30,9 +30,12 @@ public sealed class ATMBoundUserInterface : BoundUserInterface
         _atmMenu = this.CreateWindow<ATMMenu>();
         _atmMenu.OnClose += ClearMenu;
         _atmMenu.GetInsertedAccount = GetInsertedAccount;
+        _atmMenu.IsCardInserted = IsCardInserted;
 
         _atmMenu.OnInsertCardPressed += () => SendPredictedMessage(new InsertCardMessage());
         _atmMenu.OnEjectCardPressed += () => SendPredictedMessage(new EjectCardMessage());
+        _atmMenu.OnDepositPressed += () => SendPredictedMessage(new DepositMessage());
+        _atmMenu.OnWithdrawPressed += (amount, pin) => SendPredictedMessage(new WithdrawMessage(amount, pin));
 
         _transactionMenu = new TransactionMenu();
 
@@ -104,6 +107,13 @@ public sealed class ATMBoundUserInterface : BoundUserInterface
         _transactionMenu?.Dispose();
     }
 
+    // is any card in the slot, account or not
+    private bool IsCardInserted()
+    {
+        return EntMan.TryGetComponent<ATMComponent>(Owner, out var atm)
+            && _itemSlots.GetItemOrNull(Owner, atm.CardSlotId) != null;
+    }
+
     // reads the ATM's card slot and gets the acc
     private Entity<BankAccountComponent>? GetInsertedAccount()
     {
@@ -114,7 +124,7 @@ public sealed class ATMBoundUserInterface : BoundUserInterface
         if (cardUid == null || !EntMan.TryGetComponent<BankCardComponent>(cardUid, out var card))
             return null;
 
-        if (!_banking.TryGetAccount(card.AccessNumber, out var account))
+        if (!_banking.TryGetAccount(card.AccountNumber, out var account))
             return null;
 
         _account = account.Value;
@@ -129,21 +139,20 @@ public sealed class ATMBoundUserInterface : BoundUserInterface
 
     //todo move this into banking system
     //actually this kinda can't get moved into there since it needs to convey UI-specific info? maybe have an overload that returns a TransactionFailureReason enum or smth?
-    //also want to probably enforce the TransferNumber type restriction here? this only gets called from a place where a transfernumber is guaranteed to be the intention but it feels wierd not doing that
     private bool VerifyTransaction(string recipient, int amount)
     {
         var verified = true;
-        //does the recipient exist?
-        if (recipient.Length != 4 || //is it a valid transfer number at all
+        // recipient is addressed by their 6-digit account number
+        if (recipient.Length != 6 ||
             !int.TryParse(recipient, out var number) ||
-            !_banking.TryGetAccountFromTransferNumber(number, out _) //does the recipient exist?
+            !_banking.TryGetAccount(number, out _) //does the recipient exist?
            )
         {
             _transactionMenu!.TransactionRecipientDoesNotExistLabel.Visible = true;
             verified = false;
         }
 
-        //do we have enough money to make the transfer?
+        // do we have enough money to make the transfer?
         if (_account == null || _account.Value.Comp.Balance < amount)
         {
             _transactionMenu!.TransactionNotEnoughFundsLabel.Visible = true;

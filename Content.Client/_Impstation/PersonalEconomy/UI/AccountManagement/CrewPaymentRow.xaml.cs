@@ -9,8 +9,8 @@ namespace Content.Client._Impstation.PersonalEconomy.UI.AccountManagement;
 [GenerateTypedNameReferences]
 public sealed partial class CrewPaymentRow : Control
 {
-    public readonly AccessNumber Account;
-    public Action<AccessNumber>? OnPressed;
+    public readonly AccountNumber Account;
+    public Action<AccountNumber>? OnPressed;
 
     public CrewPaymentRow()
     {
@@ -21,7 +21,7 @@ public sealed partial class CrewPaymentRow : Control
     {
         RobustXamlLoader.Load(this);
 
-        Account = account.Comp.AccessNumber;
+        Account = account.Comp.AccountNumber;
         SelectButton.OnPressed += _ => OnPressed?.Invoke(Account);
 
         Update(account.Comp);

@@ -60,16 +60,16 @@ public sealed class POSBoundUserInterface : BoundUserInterface
             }
 
             //else, if the we have a recipient, open the "payment" menu unless the recipient is the one opening the menu
-            var isRecipient = localRecipientAccount == account.Value.Comp.TransferNumber;
+            var isRecipient = localRecipientAccount == account.Value.Comp.AccountNumber;
             if (localHasRecipient && !isRecipient)
             {
                 //we have a recipient and a valid number, set up the payment menu
                 var box = _menu.CreatePaymentBox();
-                _banking.TryGetAccountFromTransferNumber(localComp.RecipientAccount, out var recipient);
+                _banking.TryGetAccount(localComp.RecipientAccount, out var recipient);
                 //just assume that the bank account will not be null at this point. god help me for when I get around to deleting accounts (:
                 //todo make this whole UI account for the fact that these accounts could all get deleted at some point
                 //todo also do that for the other one
-                box.FillOutDetails(recipient!.Value.Comp.Name, recipient.Value.Comp.TransferNumber, localComp.Amount, localComp.Reason);
+                box.FillOutDetails(recipient!.Value.Comp.Name, recipient.Value.Comp.AccountNumber, localComp.Amount, localComp.Reason);
 
                 box.TransactionCancelled += () => _menu.UIKeypad.ClearButtonPressed(); //evil jank go!
 
@@ -100,8 +100,8 @@ public sealed class POSBoundUserInterface : BoundUserInterface
                 }
                 else
                 {
-                    //else, just fill out the transfer number for the current user
-                    box.TransferNoEntryBox.Text = $"{account.Value.Comp.TransferNumber.Number:0000}";
+                    //else, just fill out the account number for the current user
+                    box.TransferNoEntryBox.Text = $"{account.Value.Comp.AccountNumber.Number:000000}";
                 }
 
                 box.OnSetupCleared += () =>
@@ -169,7 +169,7 @@ public sealed class POSBoundUserInterface : BoundUserInterface
     {
         recipientNumber = 0;
 
-        var rightLength = recipient.Length == 4;
+        var rightLength = recipient.Length == 6;
         if (!rightLength)
             return false;
 
@@ -177,7 +177,7 @@ public sealed class POSBoundUserInterface : BoundUserInterface
         if (!isInt)
             return false;
 
-        var exists = _banking.TryGetAccountFromTransferNumber(number, out _);
+        var exists = _banking.TryGetAccount(number, out _);
         if (!exists)
             return false;
 
@@ -187,7 +187,7 @@ public sealed class POSBoundUserInterface : BoundUserInterface
 
     private bool VerifyTransaction(int recipient, int sender, int amount)
     {
-        if (!_banking.TryGetAccountFromTransferNumber(recipient, out var recipientAcc) ||
+        if (!_banking.TryGetAccount(recipient, out _) ||
             !_banking.TryGetAccount(sender, out var senderAcc) ||
             !(senderAcc.Value.Comp.Balance > amount))
             return false;

@@ -23,6 +23,19 @@
 
     <Control MinHeight="8"/>
 
+    <!-- cash deposit / withdraw -->
+    <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
+        <Button Name="DepositButton" Text="{Loc atm-deposit-button}"/>
+        <Control MinWidth="8"/>
+        <LineEdit Name="WithdrawAmountBox" PlaceHolder="{Loc atm-withdraw-amount-placeholder}" HorizontalExpand="True"/>
+        <Control MinWidth="4"/>
+        <LineEdit Name="WithdrawPinBox" PlaceHolder="{Loc atm-pin-placeholder}" MinWidth="64"/>
+        <Control MinWidth="4"/>
+        <Button Name="WithdrawButton" Text="{Loc atm-withdraw-button}"/>
+    </BoxContainer>
+
+    <Control MinHeight="8"/>
+
     <!-- transactions header and actions -->
     <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
         <Label Text="{Loc nanobank-recent-transactions}" StyleClasses="LabelHeading" VerticalAlignment="Center"/>

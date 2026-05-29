@@ -8,7 +8,7 @@ namespace Content.Client._Impstation.PersonalEconomy.UI;
 [GenerateTypedNameReferences]
 public sealed partial class TransactionInfoBox : Control
 {
-    public readonly TransferNumber Other;
+    public readonly AccountNumber Other;
     public readonly string OtherName = "";
     public readonly int Amount;
     public readonly double Timestamp;
@@ -19,7 +19,7 @@ public sealed partial class TransactionInfoBox : Control
         RobustXamlLoader.Load(this);
     }
 
-    public TransactionInfoBox(TransferNumber other, string name, int amount, double timestamp, string reason)
+    public TransactionInfoBox(AccountNumber other, string name, int amount, double timestamp, string reason)
     {
         RobustXamlLoader.Load(this);
 
@@ -31,7 +31,7 @@ public sealed partial class TransactionInfoBox : Control
 
         DescriptionLabel.Text = !string.IsNullOrWhiteSpace(reason)
             ? reason
-            : Loc.GetString("nanobank-transaction-counterparty", ("name", name), ("number", $"{other.Number:0000}"));
+            : Loc.GetString("nanobank-transaction-counterparty", ("name", name), ("number", $"{other.Number:000000}"));
 
         var signed = amount < 0
             ? Loc.GetString("nanobank-transaction-amount-out", ("amount", $"{int.Abs(amount):n0}"))
@@ -41,7 +41,7 @@ public sealed partial class TransactionInfoBox : Control
         CategoryLabel.Text = Loc.GetString(amount < 0 ? "nanobank-category-purchase" : "nanobank-category-deposit");
 
         ToolTip = amount < 0
-            ? Loc.GetString("nanobank-transaction-tooltip-out", ("name", name), ("number", $"{other.Number:0000}"), ("amount", int.Abs(amount)), ("reason", reason))
-            : Loc.GetString("nanobank-transaction-tooltip-in", ("name", name), ("number", $"{other.Number:0000}"), ("amount", amount), ("reason", reason));
+            ? Loc.GetString("nanobank-transaction-tooltip-out", ("name", name), ("number", $"{other.Number:000000}"), ("amount", int.Abs(amount)), ("reason", reason))
+            : Loc.GetString("nanobank-transaction-tooltip-in", ("name", name), ("number", $"{other.Number:000000}"), ("amount", amount), ("reason", reason));
     }
 }
