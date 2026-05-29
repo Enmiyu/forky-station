@@ -31,7 +31,7 @@ public sealed partial class PoSPaymentBox : Control
     {
         NameAndNumberLabel.Text =
             Loc.GetString("pos-payment-name-and-number", ("name", name), ("number", $"{number.Number:000000}"));
-        ChargeAmountLabel.Text = Loc.GetString("pos-payment-spesito-amount", ("amount", $"{amount:n0}"));
+        ChargeAmountLabel.Text = Loc.GetString("pos-payment-scrip-amount", ("amount", $"{amount:n0}"));
         ChargeReasonLabel.Text =
             string.IsNullOrEmpty(reason) ? "" : Loc.GetString("pos-payment-reason", ("reason", reason));
     }
