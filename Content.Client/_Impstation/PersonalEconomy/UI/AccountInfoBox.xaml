@@ -29,8 +29,6 @@
         <Control MinWidth="8"/>
         <LineEdit Name="WithdrawAmountBox" PlaceHolder="{Loc atm-withdraw-amount-placeholder}" HorizontalExpand="True"/>
         <Control MinWidth="4"/>
-        <LineEdit Name="WithdrawPinBox" PlaceHolder="{Loc atm-pin-placeholder}" MinWidth="64"/>
-        <Control MinWidth="4"/>
         <Button Name="WithdrawButton" Text="{Loc atm-withdraw-button}"/>
     </BoxContainer>
 

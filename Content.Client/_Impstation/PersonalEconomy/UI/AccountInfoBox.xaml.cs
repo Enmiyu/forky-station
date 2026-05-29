@@ -13,7 +13,8 @@ public sealed partial class AccountInfoBox : BoxContainer
     public Action? OnTransactionButtonPressed;
     public Action? OnEjectPressed;
     public Action? OnDepositPressed;
-    public Action<int, int>? OnWithdrawPressed;
+    // passes amount since we want the pin to be a separate window
+    public Action<int>? OnWithdrawPressed;
 
     private Entity<BankAccountComponent> _account;
 
@@ -33,12 +34,10 @@ public sealed partial class AccountInfoBox : BoxContainer
         DepositButton.OnPressed += _ => OnDepositPressed?.Invoke();
         WithdrawButton.OnPressed += _ =>
         {
-            if (int.TryParse(WithdrawAmountBox.Text, out var amount) && amount > 0
-                && int.TryParse(WithdrawPinBox.Text, out var pin))
+            if (int.TryParse(WithdrawAmountBox.Text, out var amount) && amount > 0)
             {
-                OnWithdrawPressed?.Invoke(amount, pin);
+                OnWithdrawPressed?.Invoke(amount);
                 WithdrawAmountBox.Clear();
-                WithdrawPinBox.Clear();
             }
         };
 

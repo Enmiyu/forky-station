@@ -59,11 +59,11 @@ public sealed class CurrencyExchangeSystem : EntitySystem
         if (!TryGetOutput(stack.StackTypeId, out var output))
             return;
 
-        // tax skimmed off, rest paid out in the other currency
+        // tax skimmed off, rest paid out in the other currency at a set rate
         // tax just goes but idk if it should go into the appropriate station bank acc
         // actually yknwo what fuck it i WILL do that but later
         // todo make it pay into appropriate acc
-        var paid = stack.Count * (100 - ent.Comp.TaxPercent) / 100;
+        var paid = CurrencyExchangeComponent.ComputeConversion(stack.Count, stack.StackTypeId == Scrip, ent.Comp.TaxPercent, ent.Comp.ScripPerSpeso);
         QueueDel(cashUid.Value);
         if (paid <= 0)
             return;

@@ -7,6 +7,11 @@ bank-card-examine-balance = The account's balance is {$balance} scrip
 bank-card-examine-salary = The account's salary is {$salary} scrip
 bank-pin-notify = Your bank account is #{$account}. Your PIN is {$pin} - keep it secret!
 
+# character info menu
+bank-character-heading = Bank Account
+bank-character-account = Account Number: #{$number}
+bank-character-pin = PIN: {$pin}
+
 #atm stuff
 atm-machine-window-title = Automated Teller Machine
 atm-machine-account-name-title = Welcome, {$name}!
@@ -20,6 +25,9 @@ atm-insert-card-button = Insert Card
 atm-eject-card-button = Eject Card
 atm-deposit-button = Deposit
 atm-withdraw-button = Withdraw
+atm-withdraw-amount-placeholder = Amount
+atm-pin-entry-title = Enter PIN
+atm-pin-entry-prompt = Enter your 4-digit PIN to withdraw.
 
 #NanoBank branded stuff
 nanobank-title = NanoBank
@@ -119,7 +127,7 @@ currency-exchange-title = Spesos {"<->"} Scrip
 currency-exchange-rate = Conversion tax: {$tax}%
 currency-exchange-empty = Insert spesos or scrip to begin.
 currency-exchange-inserted = Inserted: {$count} {$currency}
-currency-exchange-preview = → {$amount} {$currency}
+currency-exchange-preview = You get: {$amount} {$currency}
 currency-exchange-spesos = spesos
 currency-exchange-scrip = scrip
 currency-exchange-insert-button = Insert Cash

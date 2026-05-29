@@ -15,7 +15,9 @@ public sealed class ATMBoundUserInterface : BoundUserInterface
 
     private ATMMenu? _atmMenu;
     private TransactionMenu? _transactionMenu;
+    private PinEntryMenu? _pinMenu;
     private Entity<BankAccountComponent>? _account;
+    private int _pendingWithdrawAmount;
 
     public ATMBoundUserInterface(EntityUid owner, Enum uiKey) : base(owner, uiKey)
     {
@@ -35,7 +37,16 @@ public sealed class ATMBoundUserInterface : BoundUserInterface
         _atmMenu.OnInsertCardPressed += () => SendPredictedMessage(new InsertCardMessage());
         _atmMenu.OnEjectCardPressed += () => SendPredictedMessage(new EjectCardMessage());
         _atmMenu.OnDepositPressed += () => SendPredictedMessage(new DepositMessage());
-        _atmMenu.OnWithdrawPressed += (amount, pin) => SendPredictedMessage(new WithdrawMessage(amount, pin));
+
+        //withdrawing pops a keypad window for the PIN, then sends the request
+        _pinMenu = new PinEntryMenu();
+        _pinMenu.OnPinEntered += pin => SendPredictedMessage(new WithdrawMessage(_pendingWithdrawAmount, pin));
+        _atmMenu.OnWithdrawPressed += amount =>
+        {
+            _pendingWithdrawAmount = amount;
+            _pinMenu.Reset();
+            _pinMenu.Open();
+        };
 
         _transactionMenu = new TransactionMenu();
 
@@ -105,6 +116,7 @@ public sealed class ATMBoundUserInterface : BoundUserInterface
 
         _atmMenu?.Dispose();
         _transactionMenu?.Dispose();
+        _pinMenu?.Dispose();
     }
 
     // is any card in the slot, account or not

@@ -29,7 +29,7 @@ public sealed class CurrencyExchangeBoundUserInterface : BoundUserInterface
         _menu.OnConvertPressed += () => SendPredictedMessage(new ConvertCurrencyMessage());
     }
 
-    private (int Count, bool IsScrip, int Tax)? GetState()
+    private (int Count, bool IsScrip, int Tax, int ScripPerSpeso)? GetState()
     {
         if (!EntMan.TryGetComponent<CurrencyExchangeComponent>(Owner, out var exchange))
             return null;
@@ -38,6 +38,6 @@ public sealed class CurrencyExchangeBoundUserInterface : BoundUserInterface
         if (cashUid == null || !EntMan.TryGetComponent<StackComponent>(cashUid, out var stack))
             return null;
 
-        return (stack.Count, stack.StackTypeId == "Scrip", exchange.TaxPercent);
+        return (stack.Count, stack.StackTypeId == "Scrip", exchange.TaxPercent, exchange.ScripPerSpeso);
     }
 }

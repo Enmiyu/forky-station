@@ -13,7 +13,7 @@ public sealed partial class ATMMenu : FancyWindow
     public Action? OnInsertCardPressed;
     public Action? OnEjectCardPressed;
     public Action? OnDepositPressed;
-    public Action<int, int>? OnWithdrawPressed;
+    public Action<int>? OnWithdrawPressed;
 
     public Func<Entity<BankAccountComponent>?>? GetInsertedAccount;
     // true when a card is in the slot, regardless of whether it has an account
@@ -67,7 +67,7 @@ public sealed partial class ATMMenu : FancyWindow
         infobox.OnTransactionButtonPressed += () => OnTransactionButtonPressed?.Invoke();
         infobox.OnEjectPressed += () => OnEjectCardPressed?.Invoke();
         infobox.OnDepositPressed += () => OnDepositPressed?.Invoke();
-        infobox.OnWithdrawPressed += (amount, pin) => OnWithdrawPressed?.Invoke(amount, pin);
+        infobox.OnWithdrawPressed += amount => OnWithdrawPressed?.Invoke(amount);
         AccountInfoContainer.AddChild(infobox);
         _shownAccount = account.Owner;
     }

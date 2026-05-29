@@ -13,9 +13,9 @@
             <Button Name="SevenButton" Text="7" StyleClasses="OpenBoth" Margin="0"/>
             <Button Name="EightButton" Text="8" StyleClasses="OpenBoth" Margin="0"/>
             <Button Name="NineButton" Text="9" StyleClasses="OpenBoth" Margin="0"/>
-            <Button Name="EnterButton" Text="ENT" StyleClasses="OpenRight" Margin="0"/>
+            <Button Name="EnterButton" Text="O" StyleClasses="OpenRight" Margin="0"/>
             <Button Name="ZeroButton" Text="0" StyleClasses="OpenBoth" Margin="0"/>
-            <Button Name="ClearButton" Text="CLR" StyleClasses="OpenBoth" Margin="0"/> <!--todo replace clr with a del button?-->
+            <Button Name="ClearButton" Text="X" StyleClasses="OpenBoth" Margin="0"/>
         </GridContainer>
     </BoxContainer>
 </controls:Keypad>
