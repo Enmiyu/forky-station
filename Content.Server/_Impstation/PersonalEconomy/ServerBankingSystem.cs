@@ -30,6 +30,10 @@ public sealed class ServerBankingSystem : SharedBankingSystem
     //todo should this be a different event?
     private void OnComponentInit(Entity<BankCardComponent> ent, ref ComponentInit args)
     {
+        // blank cards stay account-less until written at a console
+        if (!ent.Comp.AutoCreateAccount)
+            return;
+
         SetupID(ent);
     }
 

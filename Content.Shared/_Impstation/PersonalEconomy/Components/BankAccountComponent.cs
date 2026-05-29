@@ -22,6 +22,20 @@ public sealed partial class BankAccountComponent : Component
     [DataField, AutoNetworkedField]
     public int Salary = 0;
 
+    // whether this account gets paid out on the payroll cycle. suspended accounts are skipped
+    [DataField, AutoNetworkedField]
+    public PaymentStatus Status = PaymentStatus.Eligible;
+    [DataField, AutoNetworkedField]
+    public string StatusReason = string.Empty;
+
+    // department proto id this account belongs to.
+    [DataField, AutoNetworkedField]
+    public string Department = string.Empty;
+
+    // command roles are skipped by department-wide pay suspension unless command itself is targeted
+    [DataField, AutoNetworkedField]
+    public bool IsCommand;
+
     //ok so all of this rambling is irrelevant now that I've ent-ified things, but I'll leave it here as a testament to 1 am me's thought process :)
     //make this a server-only property in the comp, then have the data get sent back to the client via a BUI state?
     //or just have it send a normal message back to the client system that then caches the values?
@@ -32,6 +46,13 @@ public sealed partial class BankAccountComponent : Component
     //I'll only store 10 transactions, also this lets everything be in shared, so everything seems good?
     [DataField, AutoNetworkedField]
     public List<BankTransaction> Transactions = [];
+}
+
+[Serializable, NetSerializable]
+public enum PaymentStatus : byte
+{
+    Eligible,
+    Suspended,
 }
 
 [DataDefinition, Serializable, NetSerializable]

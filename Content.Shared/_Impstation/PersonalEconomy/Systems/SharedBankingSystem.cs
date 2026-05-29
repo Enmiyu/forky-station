@@ -18,6 +18,9 @@ public abstract class SharedBankingSystem : EntitySystem
     [Dependency] private readonly ItemSlotsSystem _itemSlots = null!;
     [Dependency] private readonly SharedHandsSystem _hands = null!;
 
+    // we dont want command being targetted in this stuff
+    private const string CommandDepartment = "Command";
+
     //lookup so we're not full-scanning every transaction
     private readonly Dictionary<int, EntityUid> _accountsByAccess = new();
     private readonly Dictionary<int, EntityUid> _accountsByTransfer = new();
@@ -32,6 +35,15 @@ public abstract class SharedBankingSystem : EntitySystem
         SubscribeLocalEvent<PosSystemComponent, UpdatePoSSettingsMessage>(OnPoSSettingsUpdate);
         SubscribeLocalEvent<PosSystemComponent, PoSTransactionSuccededMessage>(OnTransactionSucceded);
         SubscribeLocalEvent<PosSystemComponent, PoSTransactionFailedMessage>(OnTransactionFailed);
+
+        SubscribeLocalEvent<AccountManagementConsoleComponent, SetAccountStatusMessage>(OnSetAccountStatus);
+        SubscribeLocalEvent<AccountManagementConsoleComponent, SetAccountSalaryMessage>(OnSetAccountSalary);
+        SubscribeLocalEvent<AccountManagementConsoleComponent, GrantAccountBonusMessage>(OnGrantBonus);
+        SubscribeLocalEvent<AccountManagementConsoleComponent, InsertCardMessage>(OnConsoleInsertCard);
+        SubscribeLocalEvent<AccountManagementConsoleComponent, EjectCardMessage>(OnConsoleEjectCard);
+        SubscribeLocalEvent<AccountManagementConsoleComponent, WriteCardMessage>(OnWriteCard);
+        SubscribeLocalEvent<AccountManagementConsoleComponent, SetDepartmentStatusMessage>(OnSetDepartmentStatus);
+        SubscribeLocalEvent<AccountManagementConsoleComponent, GrantDepartmentBonusMessage>(OnGrantDepartmentBonus);
 
         SubscribeLocalEvent<BankAccountComponent, ComponentStartup>(OnAccountStartup);
         SubscribeLocalEvent<BankAccountComponent, ComponentShutdown>(OnAccountShutdown);
@@ -115,6 +127,80 @@ public abstract class SharedBankingSystem : EntitySystem
             return;
 
         _itemSlots.TryEjectToHands(ent, slot, args.Actor);
+    }
+
+    //todo console should require command/HoP access before honouring these
+    private void OnSetAccountStatus(Entity<AccountManagementConsoleComponent> ent, ref SetAccountStatusMessage args)
+    {
+        SetAccountStatus(args.Account, args.Status, args.Reason);
+    }
+
+    private void OnSetAccountSalary(Entity<AccountManagementConsoleComponent> ent, ref SetAccountSalaryMessage args)
+    {
+        if (args.Salary < 0)
+            return;
+
+        SetAccountSalary(args.Account, args.Salary);
+    }
+
+    private void OnGrantBonus(Entity<AccountManagementConsoleComponent> ent, ref GrantAccountBonusMessage args)
+    {
+        GrantBonus(args.Account, args.Amount);
+    }
+
+    private void OnConsoleInsertCard(Entity<AccountManagementConsoleComponent> ent, ref InsertCardMessage args)
+    {
+        if (!TryGetHeldCard(args.Actor, out var card))
+            return;
+
+        _itemSlots.TryInsert(ent, ent.Comp.CardSlotId, card.Owner, args.Actor);
+    }
+
+    private void OnConsoleEjectCard(Entity<AccountManagementConsoleComponent> ent, ref EjectCardMessage args)
+    {
+        if (!_itemSlots.TryGetSlot(ent, ent.Comp.CardSlotId, out var slot))
+            return;
+
+        _itemSlots.TryEjectToHands(ent, slot, args.Actor);
+    }
+
+    private void OnWriteCard(Entity<AccountManagementConsoleComponent> ent, ref WriteCardMessage args)
+    {
+        var cardUid = _itemSlots.GetItemOrNull(ent, ent.Comp.CardSlotId);
+        if (cardUid == null || !TryComp<BankCardComponent>(cardUid, out var cardComp))
+            return;
+
+        WriteAccountToCard((cardUid.Value, cardComp), args.Account);
+    }
+
+    private void OnSetDepartmentStatus(Entity<AccountManagementConsoleComponent> ent, ref SetDepartmentStatusMessage args)
+    {
+        //command roles are exempt from department-wide suspension unless command itself is the target
+        var protectCommand = args.Status == PaymentStatus.Suspended && args.Department != CommandDepartment;
+
+        var query = EntityQueryEnumerator<BankAccountComponent>();
+        while (query.MoveNext(out _, out var comp))
+        {
+            if (comp.Department != args.Department)
+                continue;
+            if (protectCommand && comp.IsCommand)
+                continue;
+
+            SetAccountStatus(comp.AccessNumber, args.Status, args.Reason);
+        }
+    }
+
+    private void OnGrantDepartmentBonus(Entity<AccountManagementConsoleComponent> ent, ref GrantDepartmentBonusMessage args)
+    {
+        if (args.Amount <= 0)
+            return;
+
+        var query = EntityQueryEnumerator<BankAccountComponent>();
+        while (query.MoveNext(out _, out var comp))
+        {
+            if (comp.Department == args.Department)
+                GrantBonus(comp.AccessNumber, args.Amount);
+        }
     }
 
     // they gotta actually hold the card in their hand
@@ -263,6 +349,36 @@ public abstract class SharedBankingSystem : EntitySystem
         Dirty(account.Value);
     }
 
+    public virtual void SetAccountStatus(AccessNumber accessNumber, PaymentStatus status, string reason)
+    {
+        if (!TryGetAccount(accessNumber, out var account))
+            return;
+
+        account.Value.Comp.Status = status;
+        account.Value.Comp.StatusReason = reason;
+        Dirty(account.Value);
+    }
+
+    public virtual void SetAccountDepartment(AccessNumber accessNumber, string department, bool isCommand)
+    {
+        if (!TryGetAccount(accessNumber, out var account))
+            return;
+
+        account.Value.Comp.Department = department;
+        account.Value.Comp.IsCommand = isCommand;
+        Dirty(account.Value);
+    }
+
+    // adds funds to an account and logs it. used by the console for one-off bonuses
+    public virtual void GrantBonus(AccessNumber accessNumber, int amount)
+    {
+        if (amount <= 0 || !TryGetAccount(accessNumber, out var account))
+            return;
+
+        account.Value.Comp.Balance += amount;
+        AddTransaction(account.Value, Loc.GetString("nanobank-station-bank"), amount, 0, Loc.GetString("nanobank-bonus-reason"));
+    }
+
     /// <summary>
     /// Update the details on a bank card to reflect the details of a given account.
     /// </summary>
@@ -275,6 +391,19 @@ public abstract class SharedBankingSystem : EntitySystem
 
         SetCardName(card, account.Value.Comp.Name);
         SetCardNumber(card, account.Value.Comp.AccessNumber);
+    }
+
+    // points a card at an existing account, copying name + both numbers. lets the console mint extra cards for an account
+    public virtual void WriteAccountToCard(Entity<BankCardComponent> card, AccessNumber accessNumber)
+    {
+        if (!TryGetAccount(accessNumber, out var account))
+            return;
+
+        var name = account.Value.Comp.Name;
+        card.Comp.TransferNumber = account.Value.Comp.TransferNumber;
+        SetCardName(card, name); // also renames the entity from "blank bank card" to "{name}'s bank card"
+        SetCardNumber(card, account.Value.Comp.AccessNumber);
+        _metaData.SetEntityDescription(card, Loc.GetString("bank-card-description", ("name", name)));
     }
 
     /// <summary>

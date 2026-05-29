@@ -1,5 +1,6 @@
 ﻿#bank card stuff
 bank-card-name = {$name}'s bank card
+bank-card-description = This bank card belongs to {$name}.
 bank-card-slot-name = Bank Card
 bank-card-examine-access-number = The card's access number is {$number}
 bank-card-examine-transfer-number = The card's transfer number is {$number}
@@ -70,6 +71,40 @@ pos-payment-confirm-button-label = Confirm Transaction
 pos-payment-cancel-button-label = Cancel
 
 #account management console
-account-management-window-title = Account Management Console
-salary-panel-tab-name = Manage salaries & view transactions
-detail-panel-tab-name = Manage Account Details
+account-management-window-title = Payment Records Computer
+nanobank-station-balance = Station Balance
+nanobank-next-cycle = Next Cycle
+nanobank-account-records = Account Records
+nanobank-search-placeholder = Search name or number...
+nanobank-tab-accounts = Accounts
+nanobank-tab-departments = Departments
+nanobank-select-account = Select an account.
+nanobank-suspend-dept-button = Suspend
+nanobank-resume-dept-button = Resume
+nanobank-status-label = Status
+nanobank-status-eligible = Eligible
+nanobank-status-suspended = Suspended
+nanobank-set-suspended-button = Suspend Payments
+nanobank-set-eligible-button = Resume Payments
+nanobank-reason-placeholder = Reason
+nanobank-current-pay-label = Current Pay
+nanobank-pay-per-cycle = {$amount} Scr/c
+nanobank-set-pay-button = Set New Pay
+nanobank-grant-bonus-label = Grant Bonus
+nanobank-grant-bonus-button = Grant Bonus
+nanobank-input-placeholder = input
+nanobank-account-number = #{$number}
+nanobank-unknown-account = Unknown
+nanobank-placeholder = ---
+nanobank-station-bank = Station Bank
+nanobank-bonus-reason = Bonus
+
+#card programming
+nanobank-program-card-button = Program Card
+nanobank-program-card-title = Program Bank Card
+nanobank-back-button = Back
+nanobank-write-card-button = Write Account To Card
+nanobank-card-target = Writing: {$name}
+nanobank-no-account-selected = no account selected
+nanobank-card-slot-empty = No card inserted
+nanobank-card-slot-filled = Card inserted

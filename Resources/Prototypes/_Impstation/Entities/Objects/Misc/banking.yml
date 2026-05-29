@@ -22,6 +22,17 @@
   - type: BankCard
 
 - type: entity
+  parent: BankCard
+  id: BlankBankCard
+  name: blank bank card
+  description: A fresh bank card, ready to be programmed at an account management console.
+  components:
+  - type: BankCard
+    autoCreateAccount: false
+    startingBalance: 0
+    salary: 0
+
+- type: entity
   id: BankAccount
   name: Bank Account
   description: if you're seeing this, something has gone horribly wrong. admins yell at me and I'll make these properly interactable at some point.
@@ -111,6 +122,13 @@
     energy: 1.6
     color: "#e6e227"
   - type: AccountManagementConsole
+  - type: ItemSlots
+    slots:
+      card_slot:
+        name: bank-card-slot-name
+        whitelist:
+          components:
+          - BankCard
 
 - type: entity
   parent: BaseItem

@@ -22,6 +22,13 @@ public sealed partial class BankCardComponent : Component
     public LocId NamedLocId = "bank-card-name";
 
     /// <summary>
+    /// Whether this card mints its own account on spawn. False for blank cards, which only get an account
+    /// once written to at an account management console.
+    /// </summary>
+    [DataField]
+    public bool AutoCreateAccount = true;
+
+    /// <summary>
     /// Here as it's the easiest way to set a starting value per-job, like with IDs
     /// </summary>
     [DataField]

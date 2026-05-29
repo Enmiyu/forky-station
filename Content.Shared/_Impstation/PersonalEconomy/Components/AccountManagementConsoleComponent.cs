@@ -6,5 +6,7 @@
 [RegisterComponent]
 public sealed partial class AccountManagementConsoleComponent : Component
 {
-
+    // slot a card goes in so its banking details can be (re)written
+    [DataField]
+    public string CardSlotId = "card_slot";
 }

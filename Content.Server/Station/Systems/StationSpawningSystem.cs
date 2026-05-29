@@ -235,6 +235,11 @@ public sealed class StationSpawningSystem : SharedStationSpawningSystem
             var realCardRealTrue = (containedCard, bankCardComp);
             _banking.SetAccountName(bankCardComp.AccessNumber, characterName);
             _banking.UpdateCardDetails(realCardRealTrue, bankCardComp.AccessNumber);
+
+            // we can easily group accounts by this manner, since theres no easy way
+            // to track what job a player currently has. maybe make that editable thru hop?
+            if (TryGetPrimaryDepartment(jobPrototype.ID, out var department, out var isCommand))
+                _banking.SetAccountDepartment(bankCardComp.AccessNumber, department, isCommand);
         }
         //imp edit end
 
@@ -251,6 +256,42 @@ public sealed class StationSpawningSystem : SharedStationSpawningSystem
             _pdaSystem.SetOwner(idUid.Value, pdaComponent, entity, characterName);
     }
 
+    // funky start
+    private bool TryGetPrimaryDepartment(string jobId, out string department, out bool isCommand)
+    {
+        department = string.Empty;
+        isCommand = false;
+        string? fallback = null;
+        var found = false;
+
+        foreach (var dept in _prototypeManager.EnumeratePrototypes<DepartmentPrototype>())
+        {
+            if (!dept.Roles.Contains(jobId))
+                continue;
+
+            // non-primary departments (Command, CentralCommand) mark a job as command
+            if (!dept.Primary)
+            {
+                isCommand = true;
+                fallback ??= dept.ID;
+                continue;
+            }
+
+            // prefer a primary department for grouping
+            department = dept.ID;
+            found = true;
+        }
+
+        if (!found)
+        {
+            if (fallback == null)
+                return false;
+            department = fallback;
+        }
+
+        return true;
+    }
+    // funky end
 
     #endregion Player spawning helpers
 }
