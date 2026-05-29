@@ -1,6 +1,13 @@
+using Content.Server.StationRecords.Systems;
+using Content.Shared._Impstation.PersonalEconomy;
 using Content.Shared._Impstation.PersonalEconomy.Components;
 using Content.Shared._Impstation.PersonalEconomy.Systems;
+using Content.Shared.GameTicking;
+using Content.Shared.Inventory;
+using Content.Shared.PDA;
+using Content.Shared.Roles;
 using Content.Shared.Station;
+using Content.Shared.StationRecords;
 using Robust.Server.GameStates;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
@@ -16,8 +23,13 @@ public sealed class ServerBankingSystem : SharedBankingSystem
     [Dependency] private PvsOverrideSystem _pvsOverride = null!;
     [Dependency] private IRobustRandom _random = null!;
     [Dependency] private SharedStationSystem _station = null!;
+    [Dependency] private IPrototypeManager _proto = null!;
+    [Dependency] private InventorySystem _inventory = null!;
 
     private readonly EntProtoId _bankAccountProto = "BankAccount";
+
+    // job, stacked salary
+    private readonly Dictionary<string, int> _salaryByJob = new();
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -25,6 +37,52 @@ public sealed class ServerBankingSystem : SharedBankingSystem
         base.Initialize();
 
         SubscribeLocalEvent<BankCardComponent, ComponentInit>(OnComponentInit);
+        // after StationRecordsSystem so the record key is already stamped onto the PDA
+        SubscribeLocalEvent<PlayerSpawnCompleteEvent>(OnPlayerSpawnComplete, after: [typeof(StationRecordsSystem)]);
+
+        PopulateSalaries();
+    }
+
+    // link the account to its owner's station record so payroll can read criminal status.
+    // the record key lives on the PDA in the id slot, which is also where the bank card is
+    private void OnPlayerSpawnComplete(PlayerSpawnCompleteEvent ev)
+    {
+        if (!_inventory.TryGetSlotEntity(ev.Mob, "id", out var idUid))
+            return;
+
+        if (!TryComp<StationRecordKeyStorageComponent>(idUid, out var keyStorage) || keyStorage.Key is not { } key)
+            return;
+
+        if (!TryComp<PdaComponent>(idUid, out var pda)
+            || pda.BankCardSlot.ContainerSlot?.ContainedEntity is not { } card
+            || !TryComp<BankCardComponent>(card, out var bankCard))
+            return;
+
+        if (TryGetAccount(bankCard.AccessNumber, out var account))
+        {
+            account.Value.Comp.StationRecordId = key.Id;
+        }
+    }
+
+    // sums every PaymentSalaryPrototype a job appears in (e.g. base wage + hazard pay)
+    private void PopulateSalaries()
+    {
+        _salaryByJob.Clear();
+        foreach (var proto in _proto.EnumeratePrototypes<PaymentSalaryPrototype>())
+        {
+            foreach (var role in proto.Roles)
+            {
+                _salaryByJob[role] = _salaryByJob.GetValueOrDefault(role.Id) + proto.Salary;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Stacked salary for a job, or 0 if no salary prototype covers it.
+    /// </summary>
+    public int GetSalaryForJob(string jobId)
+    {
+        return _salaryByJob.GetValueOrDefault(jobId);
     }
 
     //todo should this be a different event?
@@ -60,7 +118,7 @@ public sealed class ServerBankingSystem : SharedBankingSystem
         return stations.Count > 0 ? stations[0] : null;
     }
 
-    private Entity<BankAccountComponent> CreateNewAccount(string name, EntityUid? parent)
+    public Entity<BankAccountComponent> CreateNewAccount(string name, EntityUid? parent)
     {
         //generate a unique ID
         var accountNo = _random.Next(1, 1000000);

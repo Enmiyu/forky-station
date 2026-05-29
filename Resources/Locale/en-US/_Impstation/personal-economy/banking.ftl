@@ -98,6 +98,13 @@ nanobank-unknown-account = Unknown
 nanobank-placeholder = ---
 nanobank-station-bank = Station Bank
 nanobank-bonus-reason = Bonus
+nanobank-salary-reason = Salary
+nanobank-withheld = Withheld
+nanobank-withheld-reason = Withheld: {$reason}
+nanobank-withheld-wanted = Wanted
+nanobank-withheld-detained = Detained
+nanobank-payout-announcement = Pay is out! Check your salaries for correct amounts.
+nanobank-payout-sender = Station
 
 #card programming
 nanobank-program-card-button = Program Card

@@ -15,6 +15,7 @@ public sealed partial class AccountManagementMenu : FancyWindow
 {
     [Dependency] private readonly IEntityManager _entMan = null!;
     [Dependency] private readonly IPrototypeManager _protoMan = null!;
+    [Dependency] private readonly IGameTiming _timing = null!;
 
     private readonly ClientBankingSystem _banking;
 
@@ -28,6 +29,7 @@ public sealed partial class AccountManagementMenu : FancyWindow
     public Action<string, int>? OnGrantDepartmentBonus;
 
     public Func<BankCardComponent?>? GetInsertedCard;
+    public Func<StationPayrollComponent?>? GetPayroll;
 
     private readonly Dictionary<int, CrewPaymentRow> _rows = new();
     private readonly Dictionary<string, DepartmentRow> _deptRows = new();
@@ -96,6 +98,10 @@ public sealed partial class AccountManagementMenu : FancyWindow
         var query = _entMan.EntityQueryEnumerator<BankAccountComponent>();
         while (query.MoveNext(out var uid, out var comp))
         {
+            //the station's own scrip pool isn't a crew member
+            if (comp.IsStationAccount)
+                continue;
+
             var row = new CrewPaymentRow((uid, comp));
             row.OnPressed += Select;
             CrewListContainer.AddChild(row);
@@ -175,10 +181,28 @@ public sealed partial class AccountManagementMenu : FancyWindow
             ShowDetail(null);
 
         UpdateDeptRows();
+        UpdateStationHeader();
+    }
 
-        // todo wire to real station account + payroll cycle once payroll lands
-        StationBalanceLabel.Text = Loc.GetString("nanobank-placeholder");
-        NextCycleLabel.Text = Loc.GetString("nanobank-placeholder");
+    private void UpdateStationHeader()
+    {
+        var payroll = GetPayroll?.Invoke();
+        if (payroll == null || payroll.StationAccount.Number == 0)
+        {
+            StationBalanceLabel.Text = Loc.GetString("nanobank-placeholder");
+            NextCycleLabel.Text = Loc.GetString("nanobank-placeholder");
+            return;
+        }
+
+        StationBalanceLabel.Text = _banking.TryGetAccount(payroll.StationAccount, out var acc)
+            ? Loc.GetString("nanobank-balance-amount", ("balance", $"{acc.Value.Comp.Balance:n0}"))
+            : Loc.GetString("nanobank-placeholder");
+
+        // countdown to the next cycle
+        var remaining = payroll.NextPayout - _timing.CurTime;
+        if (remaining < TimeSpan.Zero)
+            remaining = TimeSpan.Zero;
+        NextCycleLabel.Text = $"{remaining:hh\\:mm\\:ss}";
     }
 
     // each department row's toggle reflects whether anyone in it is still eligible

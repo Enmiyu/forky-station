@@ -2,6 +2,7 @@ using Content.Client._Impstation.PersonalEconomy.UI.AccountManagement;
 using Content.Shared._Impstation.PersonalEconomy.Components;
 using Content.Shared._Impstation.PersonalEconomy.Events;
 using Content.Shared.Containers.ItemSlots;
+using Content.Shared.Station;
 using Robust.Client.UserInterface;
 
 namespace Content.Client._Impstation.PersonalEconomy.BUI;
@@ -9,12 +10,14 @@ namespace Content.Client._Impstation.PersonalEconomy.BUI;
 public sealed class AccountManagementConsoleBoundUserInterface : BoundUserInterface
 {
     private readonly ItemSlotsSystem _itemSlots;
+    private readonly SharedStationSystem _station;
 
     private AccountManagementMenu? _window;
 
     public AccountManagementConsoleBoundUserInterface(EntityUid owner, Enum uiKey) : base(owner, uiKey)
     {
         _itemSlots = EntMan.System<ItemSlotsSystem>();
+        _station = EntMan.System<SharedStationSystem>();
     }
 
     protected override void Open()
@@ -26,6 +29,7 @@ public sealed class AccountManagementConsoleBoundUserInterface : BoundUserInterf
         _window.Populate();
 
         _window.GetInsertedCard = GetInsertedCard;
+        _window.GetPayroll = GetPayroll;
 
         _window.OnSetStatus += (account, status, reason) =>
             SendPredictedMessage(new SetAccountStatusMessage(account, status, reason));
@@ -40,6 +44,15 @@ public sealed class AccountManagementConsoleBoundUserInterface : BoundUserInterf
             SendPredictedMessage(new SetDepartmentStatusMessage(dept, status, reason));
         _window.OnGrantDepartmentBonus += (dept, amount) =>
             SendPredictedMessage(new GrantDepartmentBonusMessage(dept, amount));
+    }
+
+    private StationPayrollComponent? GetPayroll()
+    {
+        var station = _station.GetOwningStation(Owner);
+        if (station == null || !EntMan.TryGetComponent<StationPayrollComponent>(station.Value, out var payroll))
+            return null;
+
+        return payroll;
     }
 
     private BankCardComponent? GetInsertedCard()

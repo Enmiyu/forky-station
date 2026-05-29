@@ -36,6 +36,14 @@ public sealed partial class BankAccountComponent : Component
     [DataField, AutoNetworkedField]
     public bool IsCommand;
 
+    // station record id of the owner, used to auto-withhold pay for wanted/detained crew
+    [DataField]
+    public uint StationRecordId;
+
+    // true for the station's scrip-pool account; hidden from the management console crew list
+    [DataField, AutoNetworkedField]
+    public bool IsStationAccount;
+
     //ok so all of this rambling is irrelevant now that I've ent-ified things, but I'll leave it here as a testament to 1 am me's thought process :)
     //make this a server-only property in the comp, then have the data get sent back to the client via a BUI state?
     //or just have it send a normal message back to the client system that then caches the values?

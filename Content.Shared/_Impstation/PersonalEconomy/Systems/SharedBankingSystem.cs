@@ -379,6 +379,15 @@ public abstract class SharedBankingSystem : EntitySystem
         AddTransaction(account.Value, Loc.GetString("nanobank-station-bank"), amount, 0, Loc.GetString("nanobank-bonus-reason"));
     }
 
+    // shows a withheld deposit
+    public void LogWithheld(AccessNumber accessNumber, string reason)
+    {
+        if (!TryGetAccount(accessNumber, out var account))
+            return;
+
+        AddTransaction(account.Value, Loc.GetString("nanobank-station-bank"), 0, 0, reason);
+    }
+
     /// <summary>
     /// Update the details on a bank card to reflect the details of a given account.
     /// </summary>
