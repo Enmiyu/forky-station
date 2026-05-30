@@ -71,7 +71,7 @@ pos-setup-confirmed = settings updated!
 pos-clear-setup-button-label = Clear Setup
 pos-confirm-setup-button-label = Confirm
 
-pos-payment-present-card = Please enter a valid account number or present a valid bank card to continue
+pos-payment-present-card = Present your bank card to pay
 pos-merchant-button = Merchant settings
 
 #merchant lock

@@ -1,4 +1,4 @@
-﻿using Content.Client._Impstation.PersonalEconomy.UI.POS;
+using Content.Client._Impstation.PersonalEconomy.UI.POS;
 using Content.Shared.CCVar;
 using Content.Shared._Impstation.PersonalEconomy.Components;
 using Content.Shared._Impstation.PersonalEconomy.Events;
@@ -9,8 +9,7 @@ namespace Content.Client._Impstation.PersonalEconomy.BUI;
 
 public sealed class POSBoundUserInterface : BoundUserInterface
 {
-
-    private ClientBankingSystem _banking;
+    private readonly ClientBankingSystem _banking;
     private readonly IConfigurationManager _cfg;
     private PoSMenu? _menu;
     private TipMenu? _tipMenu;
@@ -21,110 +20,19 @@ public sealed class POSBoundUserInterface : BoundUserInterface
         _cfg = IoCManager.Resolve<IConfigurationManager>();
     }
 
-    // shows tip on purchase lol
-    private void OpenTipMenu(int subtotal)
-    {
-        _tipMenu?.Close();
-        _tipMenu = new TipMenu();
-        _tipMenu.SetSubtotal(subtotal);
-        _tipMenu.OnTipChosen += amount =>
-        {
-            if (amount > 0)
-                SendPredictedMessage(new PoSTipMessage(amount));
-            Close();
-        };
-        _tipMenu.OpenCentered();
-    }
-
-    //why does doing any UI work make me feel like I've been kicked in the head by a horse
-    //abandon hope, all ye who enter here
-
-    //todo need to make this allow for negative charge amounts so that pawn shops can exist? or do I want to force them to go through cash only?
-
-    //ok I'm writing out a flowchart for this since I can't keep it all in my head
-    //UI opened
-        //if we don't have a recipient account or the user is the recipient, create a setup box
-            //if the user isn't holding a card, tell them to present one or enter a number
-            //if they are, give them the big ol' setup button
-                //setup button pressed, hide the button & label, show the proper setup dialogue - this can just go in the setup box
-                    //confirm button pressed, set everything up on the comp, keep the window open?
-        //if we have a recipient, create a payment box
-            //if the user isn't holding a card, tell them to present one or enter a number
-            //if they are, give them the payment dialogue
-
     protected override void Open()
     {
         base.Open();
 
         var comp = EntMan.GetComponent<PosSystemComponent>(Owner);
-        var hasRecipient = comp.RecipientAccount != 0;
 
         _menu = this.CreateWindow<PoSMenu>();
 
-        // a configured POS shows the customer a charge to pay; an unconfigured one needs the merchant to unlock & set it up
-        if (hasRecipient)
-            ShowCustomerBox();
-        else
+        // owner of the pos opens up the locked pin view
+        if (IsOwner(comp) || comp.RecipientAccount == 0)
             ShowLockBox();
-
-        _menu.OnNumberEntered += s =>
-        {
-            // on the lock screen the keypad is the merchant's PIN entry
-            if (_menu!.LockMode)
-            {
-                if (int.TryParse(s, out var pin))
-                    SendPredictedMessage(new UnlockPosMessage(pin));
-                return;
-            }
-
-            // the customer presents a card to pay a configured charge - setup is behind the PIN lock, not the keypad
-            var localComp = EntMan.GetComponent<PosSystemComponent>(Owner);
-            if (localComp.RecipientAccount == 0)
-                return;
-
-            //if an invalid number was entered
-            if (!int.TryParse(s, out var userAccount) || !_banking.TryGetAccount(userAccount, out var account))
-            {
-                ShowCustomerBox();
-                return;
-            }
-
-            //the recipient can't pay themselves
-            if (localComp.RecipientAccount == account.Value.Comp.AccountNumber)
-                return;
-
-            //we have a recipient and a valid number, set up the payment menu
-            var box = _menu.CreatePaymentBox();
-            _banking.TryGetAccount(localComp.RecipientAccount, out var recipient);
-            //just assume that the bank account will not be null at this point. god help me for when I get around to deleting accounts (:
-            //todo make this whole UI account for the fact that these accounts could all get deleted at some point
-            //todo also do that for the other one
-            var merchantName = string.IsNullOrWhiteSpace(localComp.MerchantName) ? recipient!.Value.Comp.Name : localComp.MerchantName;
-            var tax = _banking.PosTaxFor(localComp.Amount);
-            box.FillOutDetails(merchantName, recipient!.Value.Comp.AccountNumber, localComp.Amount, tax, _cfg.GetCVar(CCVars.PosTax), localComp.Reason);
-
-            //cancel aborts the sale; closing avoids the held card instantly re-presenting itself and bouncing back here
-            box.TransactionCancelled += Close;
-
-            box.TransactionConfirmed += () =>
-            {
-                // ok, so, we want to do a transaction finally
-                // the customer needs to cover the subtotal plus tax
-                if (!VerifyTransaction(localComp.RecipientAccount, userAccount, localComp.Amount + tax))
-                {
-                    box.NoFundsLabel.Visible = true;
-                    SendPredictedMessage(new PoSTransactionFailedMessage());
-                }
-                else
-                {
-                    box.NoFundsLabel.Visible = false;
-                    SendPredictedMessage(new PoSTransactionSuccededMessage());
-                    //the sales done, let them tip!!
-                    _menu!.Visible = false;
-                    OpenTipMenu(localComp.Amount);
-                }
-            };
-        };
+        else
+            ShowCustomerBox();
 
         _menu.OnClearButtonPressed += () =>
         {
@@ -143,31 +51,96 @@ public sealed class POSBoundUserInterface : BoundUserInterface
     {
         base.Dispose(disposing);
         if (disposing)
-            _tipMenu?.Dispose();
+            _tipMenu?.Close();
     }
 
-    private void ShowCustomerBox()
+    private bool IsOwner(PosSystemComponent comp)
     {
-        var box = _menu!.CreateInvalidPaymentBox();
-        box.MerchantPressed += ShowLockBox;
+        // todo have the owner need to have their card
+        return comp.OwnerAccount != 0 && _banking.LocalAccount == comp.OwnerAccount.Number;
     }
 
+    // this is what the owner of the keypad sees
     private void ShowLockBox()
     {
         var claimed = EntMan.GetComponent<PosSystemComponent>(Owner).OwnerAccount != 0;
         _menu!.CreateLockBox(claimed);
+        _menu.OnNumberEntered = s =>
+        {
+            if (int.TryParse(s, out var pin))
+                SendPredictedMessage(new UnlockPosMessage(pin));
+            //wipe the entry so a wrong PIN doesn't linger for the next attempt
+            _menu.ClearKeypad();
+        };
+    }
+
+    // this what customers see
+    private void ShowCustomerBox()
+    {
+        var box = _menu!.CreateInvalidPaymentBox();
+        box.MerchantPressed += ShowLockBox;
+        _menu.OnNumberEntered = OnCustomerAccountEntered;
+    }
+
+    private void OnCustomerAccountEntered(string s)
+    {
+        var comp = EntMan.GetComponent<PosSystemComponent>(Owner);
+        if (comp.RecipientAccount == 0)
+            return;
+
+        if (!int.TryParse(s, out var customerAccount) || !_banking.TryGetAccount(customerAccount, out var account))
+        {
+            ShowCustomerBox();
+            return;
+        }
+
+        // the recipient cant pay themselves
+        if (comp.RecipientAccount == account.Value.Comp.AccountNumber)
+            return;
+
+        ShowPaymentBox(comp, customerAccount);
+    }
+
+    private void ShowPaymentBox(PosSystemComponent comp, int customerAccount)
+    {
+        var box = _menu!.CreatePaymentBox();
+        //just assume that the bank account will not be null at this point. god help me for when I get around to deleting accounts (:
+        //todo make this whole UI account for the fact that these accounts could all get deleted at some point
+        _banking.TryGetAccount(comp.RecipientAccount, out var recipient);
+        var merchantName = string.IsNullOrWhiteSpace(comp.MerchantName) ? recipient!.Value.Comp.Name : comp.MerchantName;
+        var tax = _banking.PosTaxFor(comp.Amount);
+        box.FillOutDetails(merchantName, recipient!.Value.Comp.AccountNumber, comp.Amount, tax, _cfg.GetCVar(CCVars.PosTax), comp.Reason);
+        box.TransactionCancelled += Close;
+
+        box.TransactionConfirmed += () =>
+        {
+            // the customer needs to cover the subtotal plus tax
+            if (!VerifyTransaction(comp.RecipientAccount, customerAccount, comp.Amount + tax))
+            {
+                box.NoFundsLabel.Visible = true;
+                SendPredictedMessage(new PoSTransactionFailedMessage());
+                return;
+            }
+
+            box.NoFundsLabel.Visible = false;
+            SendPredictedMessage(new PoSTransactionSuccededMessage());
+            //the sales done, let them tip!!
+            _menu!.Visible = false;
+            OpenTipMenu(comp.Amount);
+        };
     }
 
     private void ShowSetupBox()
     {
-        var localComp = EntMan.GetComponent<PosSystemComponent>(Owner);
+        var comp = EntMan.GetComponent<PosSystemComponent>(Owner);
         var box = _menu!.CreateSetupBox();
+        _menu.OnNumberEntered = null;
 
         //prefill from the comp if it's already configured, otherwise seed the recipient with the owner's account
-        if (localComp.RecipientAccount != 0)
-            box.FillOutDetails(localComp.RecipientAccount, localComp.Amount, localComp.Reason, localComp.MerchantName);
-        else if (localComp.OwnerAccount != 0)
-            box.TransferNoEntryBox.Text = $"{localComp.OwnerAccount.Number:000000}";
+        if (comp.RecipientAccount != 0)
+            box.FillOutDetails(comp.RecipientAccount, comp.Amount, comp.Reason, comp.MerchantName);
+        else if (comp.OwnerAccount != 0)
+            box.TransferNoEntryBox.Text = $"{comp.OwnerAccount.Number:000000}";
 
         box.OnSetupCleared += () =>
         {
@@ -202,11 +175,23 @@ public sealed class POSBoundUserInterface : BoundUserInterface
             box.InvalidTransferAmountLabel.Visible = false;
             box.SetupConfirmedLabel.Visible = true;
 
-            var amount = box.TransferAmount;
-            var reason = box.TransferReasonEntryBox.Text;
-
-            SendPredictedMessage(new UpdatePoSSettingsMessage(number, amount, reason, box.MerchantNameEntryBox.Text));
+            SendPredictedMessage(new UpdatePoSSettingsMessage(number, box.TransferAmount, box.TransferReasonEntryBox.Text, box.MerchantNameEntryBox.Text));
         };
+    }
+
+    // shows tip on purchase lol
+    private void OpenTipMenu(int subtotal)
+    {
+        _tipMenu?.Close();
+        _tipMenu = new TipMenu();
+        _tipMenu.SetSubtotal(subtotal);
+        _tipMenu.OnTipChosen += amount =>
+        {
+            if (amount > 0)
+                SendPredictedMessage(new PoSTipMessage(amount));
+            Close();
+        };
+        _tipMenu.OpenCentered();
     }
 
     //todo these should probably be in a helpers file?
@@ -214,16 +199,7 @@ public sealed class POSBoundUserInterface : BoundUserInterface
     {
         recipientNumber = 0;
 
-        var rightLength = recipient.Length == 6;
-        if (!rightLength)
-            return false;
-
-        var isInt = int.TryParse(recipient, out var number);
-        if (!isInt)
-            return false;
-
-        var exists = _banking.TryGetAccount(number, out _);
-        if (!exists)
+        if (recipient.Length != 6 || !int.TryParse(recipient, out var number) || !_banking.TryGetAccount(number, out _))
             return false;
 
         recipientNumber = number;
@@ -232,11 +208,8 @@ public sealed class POSBoundUserInterface : BoundUserInterface
 
     private bool VerifyTransaction(int recipient, int sender, int amount)
     {
-        if (!_banking.TryGetAccount(recipient, out _) ||
-            !_banking.TryGetAccount(sender, out var senderAcc) ||
-            !(senderAcc.Value.Comp.Balance > amount))
-            return false;
-
-        return true;
+        return _banking.TryGetAccount(recipient, out _)
+            && _banking.TryGetAccount(sender, out var senderAcc)
+            && senderAcc.Value.Comp.Balance >= amount;
     }
 }

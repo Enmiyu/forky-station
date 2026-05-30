@@ -12,9 +12,10 @@ public sealed class ClientBankingSystem : SharedBankingSystem
 {
     [Dependency] private readonly InventorySystem _inventory = default!;
 
-    private int? _playerAccount;
     private int? _playerPin;
     private Label? _pinLabel;
+
+    public int? LocalAccount { get; private set; }
 
     public override void Initialize()
     {
@@ -26,7 +27,7 @@ public sealed class ClientBankingSystem : SharedBankingSystem
 
     private void OnPinResponse(BankPinResponseEvent ev)
     {
-        _playerAccount = ev.AccountNumber;
+        LocalAccount = ev.AccountNumber;
         _playerPin = ev.Pin;
         _pinLabel?.Text = Loc.GetString("bank-character-pin", ("pin", $"{ev.Pin:0000}"));
     }
@@ -34,7 +35,7 @@ public sealed class ClientBankingSystem : SharedBankingSystem
     // adds the player's account number and PIN to character info so they always have it
     private void OnGetCharacterInfoControls(ref CharacterInfoSystem.GetCharacterInfoControlsEvent ev)
     {
-        var accountNumber = _playerAccount;
+        var accountNumber = LocalAccount;
         if (accountNumber is null && GetOwnedAccount(ev.Entity) is { } account)
             accountNumber = account.Comp.AccountNumber.Number;
 
@@ -65,7 +66,6 @@ public sealed class ClientBankingSystem : SharedBankingSystem
         ev.Controls.Add(box);
     }
 
-    // finds the player's account via the bank card in their PDA
     private Entity<BankAccountComponent>? GetOwnedAccount(EntityUid player)
     {
         if (!_inventory.TryGetSlotEntity(player, "id", out var idUid))

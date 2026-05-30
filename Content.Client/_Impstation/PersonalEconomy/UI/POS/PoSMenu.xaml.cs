@@ -19,7 +19,6 @@ public sealed partial class PoSMenu : FancyWindow
     public Action<string>? OnNumberEntered;
     public Action? OnClearButtonPressed;
 
-    // when locked, the merchant view is hidden behind a PIN and we don't auto-present held cards
     public bool LockMode;
 
     private bool _accountOpen;
@@ -43,7 +42,6 @@ public sealed partial class PoSMenu : FancyWindow
         UpdateLockState();
     }
 
-    //an unclaimed terminal can only be claimed with a card in hand, so swap the prompt & keypad based on what's held
     private void UpdateLockState()
     {
         if (!LockMode || _lockBox is null)
@@ -63,7 +61,6 @@ public sealed partial class PoSMenu : FancyWindow
             }
         }
 
-        //already claimed -> just need the owner's PIN; unclaimed -> need a card to claim
         var needsCard = !_lockClaimed && !hasCard;
         KeypadContainer.Visible = !needsCard;
         _lockBox.SetNeedsCard(needsCard);
@@ -71,7 +68,6 @@ public sealed partial class PoSMenu : FancyWindow
 
     private void CheckForCard()
     {
-        //if we're entering a PIN, we've already got an open account, we are the server or the player entity does not have hands, return
         if (LockMode || _accountOpen || _playerMan.LocalEntity is not { } realEnt || !_entityManager.HasComponent<HandsComponent>(realEnt))
         {
             return;
@@ -86,11 +82,15 @@ public sealed partial class PoSMenu : FancyWindow
             if (!_entityManager.TryGetComponent<BankCardComponent>(ent, out var comp))
                 continue;
 
-            //set the entered number & invoke the number entered action
-            UIKeypad.SetEnteredNumber($"{comp.AccountNumber.Number:000000}");
+            //present the held card. don't touch the keypad display - it's only for the merchant PIN now
             OnNumberEntered?.Invoke($"{comp.AccountNumber.Number:000000}");
             break;
         }
+    }
+
+    public void ClearKeypad()
+    {
+        UIKeypad.SetEnteredNumber("");
     }
 
     public void ClearBox()
@@ -99,6 +99,7 @@ public sealed partial class PoSMenu : FancyWindow
         _accountOpen = false;
         LockMode = false;
         _lockBox = null;
+        ClearKeypad();
     }
 
     public PoSLockBox CreateLockBox(bool claimed)
@@ -109,7 +110,6 @@ public sealed partial class PoSMenu : FancyWindow
         LockMode = true;
         _lockBox = box;
         _lockClaimed = claimed;
-        //the merchant types their PIN on the keypad, same as the concept; UpdateLockState handles the present-card case
         UpdateLockState();
         return box;
     }
@@ -149,8 +149,7 @@ public sealed partial class PoSMenu : FancyWindow
         ClearBox();
         var box = new PoSPaymentBox(false);
         MainContainer.AddChild(box);
-        //the customer types their account number here (or presents a card)
-        KeypadContainer.Visible = true;
+        KeypadContainer.Visible = false;
         return box;
     }
 }
