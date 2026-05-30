@@ -90,14 +90,15 @@ public abstract class SharedBankingSystem : EntitySystem
     {
         //customer pays with the card in their hand. they must cover the subtotal plus tax
         var tax = PosTaxFor(ent.Comp.Amount);
+        var total = ent.Comp.Amount + tax;
         var success = TryGetHeldCard(args.Actor, out var card)
             && TryGetAccount(card.Comp.AccountNumber, out var customer)
-            && customer.Value.Comp.Balance >= ent.Comp.Amount + tax
-            && TryMakeTransaction(card.Comp.AccountNumber, ent.Comp.RecipientAccount, ent.Comp.Amount, ent.Comp.Reason, ent.Comp.MerchantName);
+            && customer.Value.Comp.Balance >= total
+            && TryMakeTransaction(card.Comp.AccountNumber, ent.Comp.RecipientAccount, total, ent.Comp.Reason, ent.Comp.MerchantName);
 
         // the tax is skimmed to the stations scrip pool, on top of the merchants cut
         if (success && tax > 0 && TryGetStationScripAccount(ent, out var stationAccount))
-            TryMakeTransaction(card.Comp.AccountNumber, stationAccount, tax, Loc.GetString("pos-tax-reason"));
+            TryMakeTransaction(ent.Comp.RecipientAccount, stationAccount, tax, Loc.GetString("pos-tax-reason"));
 
         SignalPosTransaction(ent, success);
     }
