@@ -4,6 +4,7 @@ using Content.Shared._Impstation.PersonalEconomy.Events;
 using Content.Shared._Impstation.PersonalEconomy.Systems;
 using Content.Shared.Inventory;
 using Content.Shared.PDA;
+using Robust.Client.Player;
 using Robust.Client.UserInterface.Controls;
 
 namespace Content.Client._Impstation.PersonalEconomy;
@@ -11,11 +12,20 @@ namespace Content.Client._Impstation.PersonalEconomy;
 public sealed class ClientBankingSystem : SharedBankingSystem
 {
     [Dependency] private readonly InventorySystem _inventory = default!;
+    [Dependency] private readonly IPlayerManager _player = default!;
 
     private int? _playerPin;
     private Label? _pinLabel;
 
     public int? LocalAccount { get; private set; }
+
+    // is the local player holding the card for this account in their hand right now?
+    public bool LocalHoldsAccount(int account)
+    {
+        return _player.LocalEntity is { } ent
+            && TryGetHeldCard(ent, out var card)
+            && card.Comp.AccountNumber.Number == account;
+    }
 
     public override void Initialize()
     {

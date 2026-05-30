@@ -56,8 +56,8 @@ public sealed class POSBoundUserInterface : BoundUserInterface
 
     private bool IsOwner(PosSystemComponent comp)
     {
-        // todo have the owner need to have their card
-        return comp.OwnerAccount != 0 && _banking.LocalAccount == comp.OwnerAccount.Number;
+        // owner must be holding their card to access the settings view
+        return comp.OwnerAccount != 0 && _banking.LocalHoldsAccount(comp.OwnerAccount.Number);
     }
 
     // this is what the owner of the keypad sees
