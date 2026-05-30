@@ -32,6 +32,22 @@
     startingBalance: 0
     salary: 0
 
+- type: entity
+  name: bank card box
+  parent: BoxCardboard
+  id: BoxBankCard
+  description: A box of extra blank bank cards.
+  components:
+  - type: EntityTableContainerFill
+    containers:
+      storagebase:
+        id: BlankBankCard
+        amount: 4
+  - type: Sprite
+    layers:
+      - state: box
+      - state: pda
+
 # todo: look at this more critically i doubt we need this to be an ent
 - type: entity
   id: BankAccount
