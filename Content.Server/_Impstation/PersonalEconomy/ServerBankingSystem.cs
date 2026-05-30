@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Content.Server.Cargo.Systems;
 using Content.Server.DeviceLinking.Systems;
 using Content.Server.StationRecords.Systems;
 using Content.Server.Stack;
@@ -6,6 +7,7 @@ using Content.Shared._Impstation.PersonalEconomy;
 using Content.Shared._Impstation.PersonalEconomy.Components;
 using Content.Shared._Impstation.PersonalEconomy.Events;
 using Content.Shared._Impstation.PersonalEconomy.Systems;
+using Content.Shared.Cargo.Components;
 using Content.Shared.Containers.ItemSlots;
 using Content.Shared.GameTicking;
 using Content.Shared.Hands.EntitySystems;
@@ -43,10 +45,10 @@ public sealed class ServerBankingSystem : SharedBankingSystem
     [Dependency] private DeviceLinkSystem _deviceLink = default!;
     [Dependency] private SharedAudioSystem _audio = default!;
     [Dependency] private IConfigurationManager _cfg = default!;
+    [Dependency] private CargoSystem _cargo = default!;
 
     private readonly EntProtoId _bankAccountProto = "BankAccount";
     private readonly ProtoId<StackPrototype> _scripStack = "Scrip";
-    private readonly ProtoId<StackPrototype> _spesoStack = "Credit";
 
     // job, stacked salary
     private readonly Dictionary<string, int> _salaryByJob = new();
@@ -70,7 +72,7 @@ public sealed class ServerBankingSystem : SharedBankingSystem
         PopulateSalaries();
     }
 
-    // command can cash the stations scrip reserves into physical spesos at the consoles privileged rate
+    // command can cash the stations scrip reserves into spesos cargos bank acc
     private void OnConvertStationScrip(Entity<AccountManagementConsoleComponent> ent, ref ConvertStationScripMessage args)
     {
         if (!_cfg.GetCVar(CCVars.ScripStationCashout))
@@ -82,7 +84,8 @@ public sealed class ServerBankingSystem : SharedBankingSystem
         var station = _station.GetOwningStation(ent);
         if (station == null
             || !TryComp<StationPayrollComponent>(station, out var payroll)
-            || !TryGetAccount(payroll.StationAccount, out var account))
+            || !TryGetAccount(payroll.StationAccount, out var account)
+            || !TryComp<StationBankAccountComponent>(station, out var cargoBank))
             return;
 
         // only convert whole spesos worth, and only debit the scrip actually used
@@ -94,9 +97,9 @@ public sealed class ServerBankingSystem : SharedBankingSystem
         if (account.Value.Comp.Balance < scripUsed)
             return;
 
+        // pull scrip from the payroll pool, drop the spesos into cargos account
         AdjustBalanceWithLog(payroll.StationAccount, -scripUsed, Loc.GetString("nanobank-cash"), Loc.GetString("nanobank-scrip-cashout-reason"));
-        var stack = _stack.SpawnNextToOrDrop(spesos, _spesoStack, ent.Owner);
-        _hands.PickupOrDrop(args.Actor, stack);
+        _cargo.UpdateBankAccount((station.Value, cargoBank), spesos, cargoBank.PrimaryAccount);
     }
 
     private void OnSignal(PoSWiredMessage msg)

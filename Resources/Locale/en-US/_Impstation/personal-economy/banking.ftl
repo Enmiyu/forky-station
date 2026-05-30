@@ -147,4 +147,4 @@ nanobank-cash-out-title = Cash Out Station Scrip
 nanobank-cash-out-balance = Station scrip: {$balance}
 nanobank-cash-out-rate = Rate: {$rate} scrip per speso
 nanobank-cash-out-confirm = Convert
-nanobank-cash-out-preview = You get: {$amount} spesos
+nanobank-cash-out-preview = Station gets: {$amount} spesos
