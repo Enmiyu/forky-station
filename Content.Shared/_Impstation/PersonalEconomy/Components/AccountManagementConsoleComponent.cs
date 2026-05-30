@@ -9,4 +9,7 @@ public sealed partial class AccountManagementConsoleComponent : Component
     // slot a card goes in so its banking details can be (re)written
     [DataField]
     public string CardSlotId = "card_slot";
+
+    // commands privileged scrip->speso cash-out rate (scrip per speso). todo: make this a cvar
+    public const int CashoutRate = 3;
 }

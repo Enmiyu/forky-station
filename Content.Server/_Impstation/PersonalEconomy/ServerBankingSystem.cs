@@ -14,10 +14,12 @@ using Content.Shared.PDA;
 using Content.Shared.Popups;
 using Content.Shared.Roles;
 using Content.Shared.Stacks;
+using Content.Shared.CCVar;
 using Content.Shared.Station;
 using Content.Shared.StationRecords;
 using Robust.Server.GameStates;
 using Robust.Shared.Audio.Systems;
+using Robust.Shared.Configuration;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 
@@ -40,9 +42,11 @@ public sealed class ServerBankingSystem : SharedBankingSystem
     [Dependency] private SharedPopupSystem _popup = null!;
     [Dependency] private DeviceLinkSystem _deviceLink = default!;
     [Dependency] private SharedAudioSystem _audio = default!;
+    [Dependency] private IConfigurationManager _cfg = default!;
 
     private readonly EntProtoId _bankAccountProto = "BankAccount";
     private readonly ProtoId<StackPrototype> _scripStack = "Scrip";
+    private readonly ProtoId<StackPrototype> _spesoStack = "Credit";
 
     // job, stacked salary
     private readonly Dictionary<string, int> _salaryByJob = new();
@@ -58,11 +62,41 @@ public sealed class ServerBankingSystem : SharedBankingSystem
 
         SubscribeLocalEvent<ATMComponent, WithdrawMessage>(OnWithdraw);
         SubscribeLocalEvent<ATMComponent, DepositMessage>(OnDeposit);
+        SubscribeLocalEvent<AccountManagementConsoleComponent, ConvertStationScripMessage>(OnConvertStationScrip);
         SubscribeLocalEvent<PoSWiredMessage>(OnSignal);
 
         SubscribeNetworkEvent<RequestBankPinEvent>(OnRequestPin);
 
         PopulateSalaries();
+    }
+
+    // command can cash the stations scrip reserves into physical spesos at the consoles privileged rate
+    private void OnConvertStationScrip(Entity<AccountManagementConsoleComponent> ent, ref ConvertStationScripMessage args)
+    {
+        if (!_cfg.GetCVar(CCVars.ScripStationCashout))
+            return;
+
+        if (!ConsoleAllowed(ent, args.Actor) || args.Amount <= 0)
+            return;
+
+        var station = _station.GetOwningStation(ent);
+        if (station == null
+            || !TryComp<StationPayrollComponent>(station, out var payroll)
+            || !TryGetAccount(payroll.StationAccount, out var account))
+            return;
+
+        // only convert whole spesos worth, and only debit the scrip actually used
+        var spesos = args.Amount / AccountManagementConsoleComponent.CashoutRate;
+        if (spesos <= 0)
+            return;
+
+        var scripUsed = spesos * AccountManagementConsoleComponent.CashoutRate;
+        if (account.Value.Comp.Balance < scripUsed)
+            return;
+
+        AdjustBalanceWithLog(payroll.StationAccount, -scripUsed, Loc.GetString("nanobank-cash"), Loc.GetString("nanobank-scrip-cashout-reason"));
+        var stack = _stack.SpawnNextToOrDrop(spesos, _spesoStack, ent.Owner);
+        _hands.PickupOrDrop(args.Actor, stack);
     }
 
     private void OnSignal(PoSWiredMessage msg)

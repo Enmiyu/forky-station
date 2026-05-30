@@ -4,6 +4,7 @@ using Content.Shared._Impstation.PersonalEconomy.Events;
 using Content.Shared.Containers.ItemSlots;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Stacks;
+using Content.Shared.Station;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._Impstation.PersonalEconomy;
@@ -16,6 +17,8 @@ public sealed class CurrencyExchangeSystem : EntitySystem
     [Dependency] private readonly ItemSlotsSystem _itemSlots = null!;
     [Dependency] private readonly SharedHandsSystem _hands = null!;
     [Dependency] private readonly StackSystem _stack = null!;
+    [Dependency] private readonly ServerBankingSystem _banking = null!;
+    [Dependency] private readonly SharedStationSystem _station = null!;
 
     private static readonly ProtoId<StackPrototype> Spesos = "Credit";
     private static readonly ProtoId<StackPrototype> Scrip = "Scrip";
@@ -60,16 +63,33 @@ public sealed class CurrencyExchangeSystem : EntitySystem
             return;
 
         // tax skimmed off, rest paid out in the other currency at a set rate
-        // tax just goes but idk if it should go into the appropriate station bank acc
-        // actually yknwo what fuck it i WILL do that but later
-        // todo make it pay into appropriate acc
-        var paid = CurrencyExchangeComponent.ComputeConversion(stack.Count, stack.StackTypeId == Scrip, ent.Comp.TaxPercent, ent.Comp.ScripPerSpeso);
+        var inputIsScrip = stack.StackTypeId == Scrip;
+        var paid = CurrencyExchangeComponent.ComputeConversion(stack.Count, inputIsScrip, ent.Comp.TaxPercent, ent.Comp.ScripPerSpeso);
         QueueDel(cashUid.Value);
+
+        // the skimmed tax, in scrip, goes to the stations pool (everything is valued in scrip there)
+        var inputScrip = inputIsScrip ? stack.Count : stack.Count * ent.Comp.ScripPerSpeso;
+        var paidScrip = inputIsScrip ? paid * ent.Comp.ScripPerSpeso : paid;
+        DepositTaxToStation(ent, inputScrip - paidScrip);
+
         if (paid <= 0)
             return;
 
         var result = _stack.SpawnNextToOrDrop(paid, output, ent.Owner);
         _hands.PickupOrDrop(args.Actor, result);
+    }
+
+    // adds the skimmed tax to the owning stations scrip pool
+    private void DepositTaxToStation(EntityUid exchange, int taxScrip)
+    {
+        if (taxScrip <= 0)
+            return;
+
+        var station = _station.GetOwningStation(exchange);
+        if (station == null || !TryComp<StationPayrollComponent>(station, out var payroll))
+            return;
+
+        _banking.AdjustBalanceWithLog(payroll.StationAccount, taxScrip, Loc.GetString("nanobank-exchange-tax-name"), Loc.GetString("nanobank-exchange-tax-reason"));
     }
 
     private bool IsCurrency(ProtoId<StackPrototype> stackType)

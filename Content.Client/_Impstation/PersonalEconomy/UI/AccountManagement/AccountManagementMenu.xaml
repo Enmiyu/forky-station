@@ -20,6 +20,8 @@
                     </BoxContainer>
                 </BoxContainer>
                 <Control HorizontalExpand="True"/>
+                <Button Name="CashOutButton" Text="{Loc nanobank-cash-out-button}" VerticalAlignment="Center"/>
+                <Control MinWidth="4"/>
                 <Button Name="ProgramCardButton" Text="{Loc nanobank-program-card-button}" VerticalAlignment="Center"/>
             </BoxContainer>
 
@@ -111,6 +113,31 @@
                 <Control MinHeight="12"/>
 
                 <Button Name="WriteCardButton" Text="{Loc nanobank-write-card-button}"/>
+            </BoxContainer>
+        </BoxContainer>
+
+        <!-- ============ scrip cash-out view ============ -->
+        <BoxContainer Name="CashOutView" Orientation="Vertical" VerticalExpand="True" Visible="False">
+            <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
+                <Label Text="{Loc nanobank-cash-out-title}" StyleClasses="LabelHeading" VerticalAlignment="Center"/>
+                <Control HorizontalExpand="True"/>
+                <Button Name="CashOutBackButton" Text="{Loc nanobank-back-button}"/>
+            </BoxContainer>
+
+            <cc:HSeparator Margin="0 6"/>
+
+            <BoxContainer Orientation="Vertical" VerticalExpand="True">
+                <Label Name="CashOutBalanceLabel"/>
+                <Label Name="CashOutRateLabel" StyleClasses="LabelSubText"/>
+
+                <Control MinHeight="12"/>
+
+                <BoxContainer Orientation="Horizontal">
+                    <LineEdit Name="CashOutAmountBox" PlaceHolder="{Loc nanobank-input-placeholder}" HorizontalExpand="True"/>
+                    <Control MinWidth="4"/>
+                    <Button Name="CashOutConfirmButton" Text="{Loc nanobank-cash-out-confirm}"/>
+                </BoxContainer>
+                <Label Name="CashOutPreviewLabel" StyleClasses="LabelSubText"/>
             </BoxContainer>
         </BoxContainer>
 

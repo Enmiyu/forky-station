@@ -14,10 +14,6 @@ bank-character-pin = PIN: {$pin}
 
 #atm stuff
 atm-machine-window-title = Automated Teller Machine
-atm-machine-account-name-title = Welcome, {$name}!
-atm-machine-account-access-number-title = Access Number: {$number}
-atm-machine-account-transfer-number-title = Transfer Number: {$number}
-atm-machine-account-balance-title = Balance: ${$balance}
 atm-machine-no-transactions = This Account Has Made No Transactions
 atm-invalid-account-number = Please insert a bank card to continue
 atm-card-unprogrammed = This card is not programmed, take it to the Head of Personnel!
@@ -44,7 +40,6 @@ nanobank-category-deposit = Deposit
 nanobank-transaction-tooltip-in = You received N$ {$amount} from {$name} (#{$number}) for "{$reason}"
 nanobank-transaction-tooltip-out = You sent N$ {$amount} to {$name} (#{$number}) for "{$reason}"
 
-transactions-container-title = Transactions
 transfer-funds-button-title = Transfer Funds
 
 #transaction window
@@ -90,7 +85,6 @@ nanobank-account-records = Account Records
 nanobank-search-placeholder = Search name or number...
 nanobank-tab-accounts = Accounts
 nanobank-tab-departments = Departments
-nanobank-select-account = Select an account.
 nanobank-suspend-dept-button = Suspend
 nanobank-resume-dept-button = Resume
 nanobank-status-label = Status
@@ -105,7 +99,6 @@ nanobank-set-pay-button = Set New Pay
 nanobank-grant-bonus-label = Grant Bonus
 nanobank-grant-bonus-button = Grant Bonus
 nanobank-input-placeholder = input
-nanobank-account-number = #{$number}
 nanobank-unknown-account = Unknown
 nanobank-placeholder = ---
 nanobank-station-bank = Station Bank
@@ -113,6 +106,9 @@ nanobank-bonus-reason = Bonus
 nanobank-cash = Cash
 nanobank-deposit-reason = Deposit
 nanobank-withdrawal-reason = Withdrawal
+nanobank-exchange-tax-name = Currency Exchange
+nanobank-exchange-tax-reason = Exchange Tax
+nanobank-scrip-cashout-reason = Cashed Out
 nanobank-salary-reason = Salary
 nanobank-withheld = Withheld
 nanobank-withheld-reason = Withheld: {$reason}
@@ -144,3 +140,11 @@ nanobank-card-target = Writing: {$name}
 nanobank-no-account-selected = no account selected
 nanobank-card-slot-empty = No card inserted
 nanobank-card-slot-filled = Card inserted
+
+#scrip cash-out
+nanobank-cash-out-button = Cash Out
+nanobank-cash-out-title = Cash Out Station Scrip
+nanobank-cash-out-balance = Station scrip: {$balance}
+nanobank-cash-out-rate = Rate: {$rate} scrip per speso
+nanobank-cash-out-confirm = Convert
+nanobank-cash-out-preview = You get: {$amount} spesos

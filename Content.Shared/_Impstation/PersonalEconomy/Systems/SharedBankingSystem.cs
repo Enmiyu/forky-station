@@ -130,7 +130,7 @@ public abstract class SharedBankingSystem : EntitySystem
     }
 
     // the console only honors management actions for crew with command access, like the comms console
-    private bool ConsoleAllowed(EntityUid console, EntityUid actor)
+    protected bool ConsoleAllowed(EntityUid console, EntityUid actor)
     {
         if (!TryComp<AccessReaderComponent>(console, out var reader) || _accessReader.IsAllowed(actor, console, reader))
             return true;

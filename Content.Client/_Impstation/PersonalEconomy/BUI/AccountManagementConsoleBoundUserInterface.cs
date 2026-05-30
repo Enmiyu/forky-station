@@ -44,6 +44,7 @@ public sealed class AccountManagementConsoleBoundUserInterface : BoundUserInterf
             SendPredictedMessage(new SetDepartmentStatusMessage(dept, status, reason));
         _window.OnGrantDepartmentBonus += (dept, amount) =>
             SendPredictedMessage(new GrantDepartmentBonusMessage(dept, amount));
+        _window.OnCashOut += amount => SendPredictedMessage(new ConvertStationScripMessage(amount));
     }
 
     private StationPayrollComponent? GetPayroll()
