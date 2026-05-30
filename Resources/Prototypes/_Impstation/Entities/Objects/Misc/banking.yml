@@ -195,5 +195,13 @@
     interfaces:
       enum.POSUIKey.Key:
         type: POSBoundUserInterface
+  - type: DeviceNetwork
+    deviceNetId: Wireless
+  - type: DeviceLinkSource
+    ports:
+    - POSTransactionSucceeded
+    - POSTransactionFailed
+  - type: WirelessNetworkConnection
+    range: 200
   - type: PosSystem
   - type: PhysicalComposition

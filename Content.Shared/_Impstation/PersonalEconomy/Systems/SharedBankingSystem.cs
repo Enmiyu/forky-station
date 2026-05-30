@@ -72,17 +72,21 @@ public abstract class SharedBankingSystem : EntitySystem
 
     private void OnTransactionFailed(Entity<PosSystemComponent> ent, ref PoSTransactionFailedMessage args)
     {
-        //todo implement this : have the pos system put out a "transaction failed" signal
+        SignalPosTransaction(ent, false);
     }
 
     private void OnTransactionSucceded(Entity<PosSystemComponent> ent, ref PoSTransactionSuccededMessage args)
     {
-        //todo make this put out a "transaction succeded" signal
         //customer pays with the card in their hand
-        if (!TryGetHeldCard(args.Actor, out var card))
-            return;
+        var success = TryGetHeldCard(args.Actor, out var card)
+            && TryMakeTransaction(card.Comp.AccountNumber, ent.Comp.RecipientAccount, ent.Comp.Amount, ent.Comp.Reason);
 
-        TryMakeTransaction(card.Comp.AccountNumber, ent.Comp.RecipientAccount, ent.Comp.Amount, ent.Comp.Reason);
+        SignalPosTransaction(ent, success);
+    }
+
+    private void SignalPosTransaction(Entity<PosSystemComponent> ent, bool success)
+    {
+        RaiseLocalEvent(new PoSWiredMessage(ent, success));
     }
 
     private void OnPoSSettingsUpdate(Entity<PosSystemComponent> ent, ref UpdatePoSSettingsMessage args)

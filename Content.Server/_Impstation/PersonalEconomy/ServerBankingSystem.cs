@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Content.Server.DeviceLinking.Systems;
 using Content.Server.StationRecords.Systems;
 using Content.Server.Stack;
 using Content.Shared._Impstation.PersonalEconomy;
@@ -36,6 +37,7 @@ public sealed class ServerBankingSystem : SharedBankingSystem
     [Dependency] private ItemSlotsSystem _itemSlots = null!;
     [Dependency] private SharedHandsSystem _hands = null!;
     [Dependency] private SharedPopupSystem _popup = null!;
+    [Dependency] private DeviceLinkSystem _deviceLink = default!;
 
     private readonly EntProtoId _bankAccountProto = "BankAccount";
     private readonly ProtoId<StackPrototype> _scripStack = "Scrip";
@@ -54,10 +56,16 @@ public sealed class ServerBankingSystem : SharedBankingSystem
 
         SubscribeLocalEvent<ATMComponent, WithdrawMessage>(OnWithdraw);
         SubscribeLocalEvent<ATMComponent, DepositMessage>(OnDeposit);
+        SubscribeLocalEvent<PoSWiredMessage>(OnSignal);
 
         SubscribeNetworkEvent<RequestBankPinEvent>(OnRequestPin);
 
         PopulateSalaries();
+    }
+
+    private void OnSignal(PoSWiredMessage msg)
+    {
+        _deviceLink.InvokePort(msg.Ent.Owner, msg.Success ? msg.Ent.Comp.SuccessPort : msg.Ent.Comp.FailPort);
     }
 
     private void OnWithdraw(Entity<ATMComponent> ent, ref WithdrawMessage args)

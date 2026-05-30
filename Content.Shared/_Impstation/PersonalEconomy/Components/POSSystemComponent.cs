@@ -1,4 +1,6 @@
-﻿using Robust.Shared.GameStates;
+﻿using Content.Shared.DeviceLinking;
+using Robust.Shared.GameStates;
+using Robust.Shared.Prototypes;
 
 namespace Content.Shared._Impstation.PersonalEconomy.Components;
 
@@ -17,4 +19,10 @@ public sealed partial class PosSystemComponent : Component
     [AutoNetworkedField]
     public string Reason = "";
 
+    // device-link ports pulsed on a sale, so the POS can be wired to stuff (imagine a bomb lol)
+    [DataField]
+    public ProtoId<SourcePortPrototype> SuccessPort = "POSTransactionSucceeded";
+
+    [DataField]
+    public ProtoId<SourcePortPrototype> FailPort = "POSTransactionFailed";
 }
