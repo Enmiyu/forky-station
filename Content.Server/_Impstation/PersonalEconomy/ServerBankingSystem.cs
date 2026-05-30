@@ -17,6 +17,7 @@ using Content.Shared.Stacks;
 using Content.Shared.Station;
 using Content.Shared.StationRecords;
 using Robust.Server.GameStates;
+using Robust.Shared.Audio.Systems;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 
@@ -38,6 +39,7 @@ public sealed class ServerBankingSystem : SharedBankingSystem
     [Dependency] private SharedHandsSystem _hands = null!;
     [Dependency] private SharedPopupSystem _popup = null!;
     [Dependency] private DeviceLinkSystem _deviceLink = default!;
+    [Dependency] private SharedAudioSystem _audio = default!;
 
     private readonly EntProtoId _bankAccountProto = "BankAccount";
     private readonly ProtoId<StackPrototype> _scripStack = "Scrip";
@@ -66,6 +68,9 @@ public sealed class ServerBankingSystem : SharedBankingSystem
     private void OnSignal(PoSWiredMessage msg)
     {
         _deviceLink.InvokePort(msg.Ent.Owner, msg.Success ? msg.Ent.Comp.SuccessPort : msg.Ent.Comp.FailPort);
+
+        // KACHING BABY!!!!!!!!!!!!
+        _audio.PlayPvs(msg.Success ? msg.Ent.Comp.PurchaseSound : msg.Ent.Comp.DeclineSound, msg.Ent.Owner);
     }
 
     private void OnWithdraw(Entity<ATMComponent> ent, ref WithdrawMessage args)

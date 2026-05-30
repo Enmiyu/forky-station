@@ -1,4 +1,5 @@
 ﻿using Content.Shared.DeviceLinking;
+using Robust.Shared.Audio;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 
@@ -25,4 +26,12 @@ public sealed partial class PosSystemComponent : Component
 
     [DataField]
     public ProtoId<SourcePortPrototype> FailPort = "POSTransactionFailed";
+
+    // played at the POS when a sale goes through
+    [DataField]
+    public SoundSpecifier? PurchaseSound = new SoundPathSpecifier("/Audio/Effects/kaching.ogg");
+
+    // played at the POS when a sale is declined
+    [DataField]
+    public SoundSpecifier? DeclineSound = new SoundPathSpecifier("/Audio/Machines/buzz-sigh.ogg");
 }
