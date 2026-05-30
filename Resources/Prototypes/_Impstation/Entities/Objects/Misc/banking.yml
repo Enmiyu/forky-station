@@ -122,6 +122,8 @@
     energy: 1.6
     color: "#e6e227"
   - type: AccountManagementConsole
+  - type: AccessReader
+    access: [[ "Command" ]]
   - type: ItemSlots
     slots:
       card_slot:

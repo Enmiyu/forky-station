@@ -1,9 +1,12 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Content.Shared._Impstation.PersonalEconomy.Components;
 using Content.Shared._Impstation.PersonalEconomy.Events;
+using Content.Shared.Access.Components;
+using Content.Shared.Access.Systems;
 using Content.Shared.Containers.ItemSlots;
 using Content.Shared.Examine;
 using Content.Shared.Hands.EntitySystems;
+using Content.Shared.Popups;
 using Robust.Shared.Timing;
 
 namespace Content.Shared._Impstation.PersonalEconomy.Systems;
@@ -17,6 +20,8 @@ public abstract class SharedBankingSystem : EntitySystem
     [Dependency] private readonly IGameTiming _timing = null!;
     [Dependency] private readonly ItemSlotsSystem _itemSlots = null!;
     [Dependency] private readonly SharedHandsSystem _hands = null!;
+    [Dependency] private readonly AccessReaderSystem _accessReader = null!;
+    [Dependency] private readonly SharedPopupSystem _popup = null!;
 
     // we dont want command being targetted in this stuff
     private const string CommandDepartment = "Command";
@@ -124,15 +129,27 @@ public abstract class SharedBankingSystem : EntitySystem
         _itemSlots.TryEjectToHands(ent, slot, args.Actor);
     }
 
-    //todo console should require command/HoP access before honouring these
+    // the console only honors management actions for crew with command access, like the comms console
+    private bool ConsoleAllowed(EntityUid console, EntityUid actor)
+    {
+        if (!TryComp<AccessReaderComponent>(console, out var reader) || _accessReader.IsAllowed(actor, console, reader))
+            return true;
+
+        _popup.PopupClient(Loc.GetString("account-management-access-denied"), console, actor);
+        return false;
+    }
+
     private void OnSetAccountStatus(Entity<AccountManagementConsoleComponent> ent, ref SetAccountStatusMessage args)
     {
+        if (!ConsoleAllowed(ent, args.Actor))
+            return;
+
         SetAccountStatus(args.Account, args.Status, args.Reason);
     }
 
     private void OnSetAccountSalary(Entity<AccountManagementConsoleComponent> ent, ref SetAccountSalaryMessage args)
     {
-        if (args.Salary < 0)
+        if (!ConsoleAllowed(ent, args.Actor) || args.Salary < 0)
             return;
 
         SetAccountSalary(args.Account, args.Salary);
@@ -140,12 +157,15 @@ public abstract class SharedBankingSystem : EntitySystem
 
     private void OnGrantBonus(Entity<AccountManagementConsoleComponent> ent, ref GrantAccountBonusMessage args)
     {
+        if (!ConsoleAllowed(ent, args.Actor))
+            return;
+
         GrantBonus(args.Account, args.Amount);
     }
 
     private void OnConsoleInsertCard(Entity<AccountManagementConsoleComponent> ent, ref InsertCardMessage args)
     {
-        if (!TryGetHeldCard(args.Actor, out var card))
+        if (!ConsoleAllowed(ent, args.Actor) || !TryGetHeldCard(args.Actor, out var card))
             return;
 
         _itemSlots.TryInsert(ent, ent.Comp.CardSlotId, card.Owner, args.Actor);
@@ -153,7 +173,7 @@ public abstract class SharedBankingSystem : EntitySystem
 
     private void OnConsoleEjectCard(Entity<AccountManagementConsoleComponent> ent, ref EjectCardMessage args)
     {
-        if (!_itemSlots.TryGetSlot(ent, ent.Comp.CardSlotId, out var slot))
+        if (!ConsoleAllowed(ent, args.Actor) || !_itemSlots.TryGetSlot(ent, ent.Comp.CardSlotId, out var slot))
             return;
 
         _itemSlots.TryEjectToHands(ent, slot, args.Actor);
@@ -161,6 +181,9 @@ public abstract class SharedBankingSystem : EntitySystem
 
     private void OnWriteCard(Entity<AccountManagementConsoleComponent> ent, ref WriteCardMessage args)
     {
+        if (!ConsoleAllowed(ent, args.Actor))
+            return;
+
         var cardUid = _itemSlots.GetItemOrNull(ent, ent.Comp.CardSlotId);
         if (cardUid == null || !TryComp<BankCardComponent>(cardUid, out var cardComp))
             return;
@@ -170,6 +193,9 @@ public abstract class SharedBankingSystem : EntitySystem
 
     private void OnSetDepartmentStatus(Entity<AccountManagementConsoleComponent> ent, ref SetDepartmentStatusMessage args)
     {
+        if (!ConsoleAllowed(ent, args.Actor))
+            return;
+
         //command roles are exempt from department-wide suspension unless command itself is the target
         var protectCommand = args.Status == PaymentStatus.Suspended && args.Department != CommandDepartment;
 
@@ -187,7 +213,7 @@ public abstract class SharedBankingSystem : EntitySystem
 
     private void OnGrantDepartmentBonus(Entity<AccountManagementConsoleComponent> ent, ref GrantDepartmentBonusMessage args)
     {
-        if (args.Amount <= 0)
+        if (!ConsoleAllowed(ent, args.Actor) || args.Amount <= 0)
             return;
 
         var query = EntityQueryEnumerator<BankAccountComponent>();

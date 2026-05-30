@@ -83,6 +83,7 @@ pos-payment-cancel-button-label = Cancel
 
 #account management console
 account-management-window-title = Payment Records Computer
+account-management-access-denied = Access denied.
 nanobank-station-balance = Station Balance
 nanobank-next-cycle = Next Cycle
 nanobank-account-records = Account Records
