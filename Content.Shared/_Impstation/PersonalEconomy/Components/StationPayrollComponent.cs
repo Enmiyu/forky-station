@@ -39,6 +39,24 @@ public sealed partial class StationPayrollComponent : Component
     public int PerCrewFunding = 1000;
 
     /// <summary>
+    /// Delay so that crew can spawn to get the first payroll.
+    /// </summary>
+    [DataField]
+    public TimeSpan InitialFundDelay = TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// When the one time roundstart funding should fire.
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public TimeSpan InitialFundTime;
+
+    /// <summary>
+    /// Whether the one time roundstart funding has already happened.
+    /// </summary>
+    [DataField]
+    public bool InitialFunded;
+
+    /// <summary>
     /// Bool showing if the station account was created or not.
     /// </summary>
     [DataField]

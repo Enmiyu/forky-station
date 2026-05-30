@@ -37,6 +37,7 @@ public sealed class PayrollSystem : EntitySystem
         Dirty(account);
         ent.Comp.StationAccount = account.Comp.AccountNumber;
         ent.Comp.NextPayout = _timing.CurTime + ent.Comp.PayoutInterval;
+        ent.Comp.InitialFundTime = _timing.CurTime + ent.Comp.InitialFundDelay;
         ent.Comp.Initialized = true;
         Dirty(ent);
     }
@@ -48,8 +49,18 @@ public sealed class PayrollSystem : EntitySystem
         var query = EntityQueryEnumerator<StationPayrollComponent>();
         while (query.MoveNext(out var uid, out var payroll))
         {
+            if (!payroll.Initialized)
+                continue;
+
+            if (!payroll.InitialFunded && _timing.CurTime >= payroll.InitialFundTime)
+            {
+                FundStationPool((uid, payroll));
+                payroll.InitialFunded = true;
+                Dirty(uid, payroll);
+            }
+
             // only do the full station payout if its been long enough.
-            if (!payroll.Initialized || _timing.CurTime < payroll.NextPayout)
+            if (_timing.CurTime < payroll.NextPayout)
                 continue;
 
             RunCycle((uid, payroll));
@@ -58,7 +69,7 @@ public sealed class PayrollSystem : EntitySystem
         }
     }
 
-    private void RunCycle(Entity<StationPayrollComponent> station)
+    private void FundStationPool(Entity<StationPayrollComponent> station)
     {
         if (!_banking.TryGetAccount(station.Comp.StationAccount, out var stationAccount))
             return;
@@ -73,12 +84,20 @@ public sealed class PayrollSystem : EntitySystem
                 eligible++; // only pay the station for crew that is nice :)
         }
 
-        // fund the station pool for this cycle
         var funding = station.Comp.BaseFunding + station.Comp.PerCrewFunding * eligible;
         _banking.SetAccountBalance(station.Comp.StationAccount, stationAccount.Value.Comp.Balance + funding);
+    }
+
+    private void RunCycle(Entity<StationPayrollComponent> station)
+    {
+        if (!_banking.TryGetAccount(station.Comp.StationAccount, out _))
+            return;
+
+        // funds the station for the cycle
+        FundStationPool(station);
 
         // pay everyone!!!
-        query = EntityQueryEnumerator<BankAccountComponent>();
+        var query = EntityQueryEnumerator<BankAccountComponent>();
         while (query.MoveNext(out var uid, out var comp))
         {
             if (!BelongsToStation(uid, station.Owner) || comp.AccountNumber == station.Comp.StationAccount)
