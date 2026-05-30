@@ -59,6 +59,9 @@ pos-window-title = Point-of-sale system
 pos-begin-setup-text = This device has not been set up, please press the button below to begin
 pos-begin-setup-present-card = This device has not been set up, please enter a valid account number or present a valid bank card to continue
 pos-begin-setup-button-text = Begin Setup
+pos-setup-title = Merchant Setup
+pos-setup-merchant-name = Merchant Name
+pos-setup-merchant-name-placeholder = e.g. Fête de la Vanille
 pos-setup-recipient-account-number = Recipient Account Number
 pos-setup-charge-amount = Charge Amount
 pos-setup-reason = Reason
@@ -69,12 +72,38 @@ pos-clear-setup-button-label = Clear Setup
 pos-confirm-setup-button-label = Confirm
 
 pos-payment-present-card = Please enter a valid account number or present a valid bank card to continue
+pos-merchant-button = Merchant settings
+
+#merchant lock
+pos-lock-title = Merchant Login
+pos-lock-prompt = Enter your bank PIN on the keypad to access merchant settings
+pos-lock-present-card = Hold your bank card to claim this terminal
+pos-lock-invalid = Incorrect PIN
+pos-payment-review-title = Review Purchase
 pos-payment-name-and-number = {$name} (#{$number})
 pos-payment-is-trying-to-charge = Is trying to charge you
-pos-payment-scrip-amount = ${$amount} Scrip
+pos-payment-scrip-amount = N${$amount}
+pos-payment-subtotal = Subtotal
+pos-payment-tax-label = Tax ({$percent}%)
+pos-payment-total = Total
 pos-payment-reason = for "{$reason}"
 pos-payment-confirm-button-label = Confirm Transaction
 pos-payment-cancel-button-label = Cancel
+pos-tax-reason = Sales Tax
+pos-tip-reason = Tip
+
+#tip menu
+pos-tip-window-title = Add a Tip?
+pos-tip-select = Select Tip
+pos-tip-preview = N${$amount}
+pos-tip-15 = 15% - Good!
+pos-tip-18 = 18% - Great!
+pos-tip-20 = 20% - Wow!
+pos-tip-25 = 25% - Best Service!
+pos-tip-custom = Custom Amount
+pos-tip-custom-confirm = Tip
+pos-tip-none = No Tip
+pos-tip-pretax = Tip is calculated before tax
 
 #account management console
 account-management-window-title = Payment Records Computer

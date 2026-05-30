@@ -1,8 +1,9 @@
 ﻿using Content.Client._Impstation.PersonalEconomy.UI.POS;
+using Content.Shared.CCVar;
 using Content.Shared._Impstation.PersonalEconomy.Components;
 using Content.Shared._Impstation.PersonalEconomy.Events;
-using Content.Shared.Xenoarchaeology.Artifact.XAE;
 using Robust.Client.UserInterface;
+using Robust.Shared.Configuration;
 
 namespace Content.Client._Impstation.PersonalEconomy.BUI;
 
@@ -10,11 +11,29 @@ public sealed class POSBoundUserInterface : BoundUserInterface
 {
 
     private ClientBankingSystem _banking;
+    private readonly IConfigurationManager _cfg;
     private PoSMenu? _menu;
+    private TipMenu? _tipMenu;
 
     public POSBoundUserInterface(EntityUid owner, Enum uiKey) : base(owner, uiKey)
     {
         _banking = EntMan.System<ClientBankingSystem>();
+        _cfg = IoCManager.Resolve<IConfigurationManager>();
+    }
+
+    // shows tip on purchase lol
+    private void OpenTipMenu(int subtotal)
+    {
+        _tipMenu?.Close();
+        _tipMenu = new TipMenu();
+        _tipMenu.SetSubtotal(subtotal);
+        _tipMenu.OnTipChosen += amount =>
+        {
+            if (amount > 0)
+                SendPredictedMessage(new PoSTipMessage(amount));
+            Close();
+        };
+        _tipMenu.OpenCentered();
     }
 
     //why does doing any UI work make me feel like I've been kicked in the head by a horse
@@ -38,130 +57,156 @@ public sealed class POSBoundUserInterface : BoundUserInterface
         base.Open();
 
         var comp = EntMan.GetComponent<PosSystemComponent>(Owner);
-        var recipientAccount = comp.RecipientAccount;
-        var hasRecipient = recipientAccount != 0;
+        var hasRecipient = comp.RecipientAccount != 0;
 
         _menu = this.CreateWindow<PoSMenu>();
 
-        CreateRelevantBox(hasRecipient);
+        // a configured POS shows the customer a charge to pay; an unconfigured one needs the merchant to unlock & set it up
+        if (hasRecipient)
+            ShowCustomerBox();
+        else
+            ShowLockBox();
 
         _menu.OnNumberEntered += s =>
         {
-            //these don't actually need to be here but I'm too lazy to fix it rn
+            // on the lock screen the keypad is the merchant's PIN entry
+            if (_menu!.LockMode)
+            {
+                if (int.TryParse(s, out var pin))
+                    SendPredictedMessage(new UnlockPosMessage(pin));
+                return;
+            }
+
+            // the customer presents a card to pay a configured charge - setup is behind the PIN lock, not the keypad
             var localComp = EntMan.GetComponent<PosSystemComponent>(Owner);
-            var localRecipientAccount = localComp.RecipientAccount;
-            var localHasRecipient = localRecipientAccount != 0;
+            if (localComp.RecipientAccount == 0)
+                return;
 
             //if an invalid number was entered
             if (!int.TryParse(s, out var userAccount) || !_banking.TryGetAccount(userAccount, out var account))
             {
-                CreateRelevantBox(localHasRecipient);
+                ShowCustomerBox();
                 return;
             }
 
-            //else, if the we have a recipient, open the "payment" menu unless the recipient is the one opening the menu
-            var isRecipient = localRecipientAccount == account.Value.Comp.AccountNumber;
-            if (localHasRecipient && !isRecipient)
-            {
-                //we have a recipient and a valid number, set up the payment menu
-                var box = _menu.CreatePaymentBox();
-                _banking.TryGetAccount(localComp.RecipientAccount, out var recipient);
-                //just assume that the bank account will not be null at this point. god help me for when I get around to deleting accounts (:
-                //todo make this whole UI account for the fact that these accounts could all get deleted at some point
-                //todo also do that for the other one
-                box.FillOutDetails(recipient!.Value.Comp.Name, recipient.Value.Comp.AccountNumber, localComp.Amount, localComp.Reason);
+            //the recipient can't pay themselves
+            if (localComp.RecipientAccount == account.Value.Comp.AccountNumber)
+                return;
 
-                box.TransactionCancelled += () => _menu.UIKeypad.ClearButtonPressed(); //evil jank go!
+            //we have a recipient and a valid number, set up the payment menu
+            var box = _menu.CreatePaymentBox();
+            _banking.TryGetAccount(localComp.RecipientAccount, out var recipient);
+            //just assume that the bank account will not be null at this point. god help me for when I get around to deleting accounts (:
+            //todo make this whole UI account for the fact that these accounts could all get deleted at some point
+            //todo also do that for the other one
+            var merchantName = string.IsNullOrWhiteSpace(localComp.MerchantName) ? recipient!.Value.Comp.Name : localComp.MerchantName;
+            var tax = _banking.PosTaxFor(localComp.Amount);
+            box.FillOutDetails(merchantName, recipient!.Value.Comp.AccountNumber, localComp.Amount, tax, _cfg.GetCVar(CCVars.PosTax), localComp.Reason);
 
-                box.TransactionConfirmed += () =>
-                {
-                    //ok, so, we want to do a transaction finally
-                    //we need to verify we can do it, then we either send off the "transaction confirmed" message or the "transaction declined" message
-                    if (!VerifyTransaction(localComp.RecipientAccount, userAccount, localComp.Amount))
-                    {
-                        box.NoFundsLabel.Visible = true;
-                        SendPredictedMessage(new PoSTransactionFailedMessage());
-                    }
-                    else
-                    {
-                        box.NoFundsLabel.Visible = false;
-                        SendPredictedMessage(new PoSTransactionSuccededMessage());
-                        Close();
-                    }
-                };
-            }
-            else
+            //cancel aborts the sale; closing avoids the held card instantly re-presenting itself and bouncing back here
+            box.TransactionCancelled += Close;
+
+            box.TransactionConfirmed += () =>
             {
-                var box = _menu.CreateSetupBox();
-                if (localHasRecipient)
+                // ok, so, we want to do a transaction finally
+                // the customer needs to cover the subtotal plus tax
+                if (!VerifyTransaction(localComp.RecipientAccount, userAccount, localComp.Amount + tax))
                 {
-                    //if we have a recipient, fill out all the details from the component
-                    box.FillOutDetails(localComp.RecipientAccount, localComp.Amount, localComp.Reason);
+                    box.NoFundsLabel.Visible = true;
+                    SendPredictedMessage(new PoSTransactionFailedMessage());
                 }
                 else
                 {
-                    //else, just fill out the account number for the current user
-                    box.TransferNoEntryBox.Text = $"{account.Value.Comp.AccountNumber.Number:000000}";
+                    box.NoFundsLabel.Visible = false;
+                    SendPredictedMessage(new PoSTransactionSuccededMessage());
+                    //the sales done, let them tip!!
+                    _menu!.Visible = false;
+                    OpenTipMenu(localComp.Amount);
                 }
-
-                box.OnSetupCleared += () =>
-                {
-                    SendPredictedMessage(new UpdatePoSSettingsMessage(0, 0, ""));
-                    _menu.CreateInvalidSetupBox();
-                };
-
-                box.OnSetupConfirmed += () =>
-                {
-                    var valid = true;
-                    //if the recipient doesn't exist, say what's going wrong and mark this as invalid
-                    if (!VerifyRecipient(box.TransferNoEntryBox.Text, out var number))
-                    {
-                        box.InvalidRecipientLabel.Visible = true;
-                        valid = false;
-                    }
-
-                    //if the transfer amount is 0, say what's going on and mark this as invalid
-                    if (box.TransferAmount == 0)
-                    {
-                        box.InvalidTransferAmountLabel.Visible = true;
-                        valid = false;
-                    }
-
-                    if (!valid)
-                    {
-                        box.SetupConfirmedLabel.Visible = false;
-                        return;
-                    }
-
-                    box.InvalidRecipientLabel.Visible = false;
-                    box.InvalidTransferAmountLabel.Visible = false;
-                    box.SetupConfirmedLabel.Visible = true;
-
-                    var amount = box.TransferAmount;
-                    var reason = box.TransferReasonEntryBox.Text;
-
-                    SendPredictedMessage(new UpdatePoSSettingsMessage(number, amount, reason));
-                };
-            }
+            };
         };
 
         _menu.OnClearButtonPressed += () =>
         {
-            CreateRelevantBox(comp.RecipientAccount != 0);
+            if (EntMan.GetComponent<PosSystemComponent>(Owner).RecipientAccount != 0)
+                ShowCustomerBox();
         };
     }
 
-    private void CreateRelevantBox(bool hasRecipient)
+    protected override void ReceiveMessage(BoundUserInterfaceMessage message)
     {
-        //if we have a recipient account set, setup a payment menu
-        if (hasRecipient)
+        if (message is PosUnlockedMessage)
+            ShowSetupBox();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing)
+            _tipMenu?.Dispose();
+    }
+
+    private void ShowCustomerBox()
+    {
+        var box = _menu!.CreateInvalidPaymentBox();
+        box.MerchantPressed += ShowLockBox;
+    }
+
+    private void ShowLockBox()
+    {
+        var claimed = EntMan.GetComponent<PosSystemComponent>(Owner).OwnerAccount != 0;
+        _menu!.CreateLockBox(claimed);
+    }
+
+    private void ShowSetupBox()
+    {
+        var localComp = EntMan.GetComponent<PosSystemComponent>(Owner);
+        var box = _menu!.CreateSetupBox();
+
+        //prefill from the comp if it's already configured, otherwise seed the recipient with the owner's account
+        if (localComp.RecipientAccount != 0)
+            box.FillOutDetails(localComp.RecipientAccount, localComp.Amount, localComp.Reason, localComp.MerchantName);
+        else if (localComp.OwnerAccount != 0)
+            box.TransferNoEntryBox.Text = $"{localComp.OwnerAccount.Number:000000}";
+
+        box.OnSetupCleared += () =>
         {
-            _menu!.CreateInvalidPaymentBox();
-        }
-        else //else, setup a setup menu
+            SendPredictedMessage(new UpdatePoSSettingsMessage(0, 0, "", ""));
+            ShowLockBox();
+        };
+
+        box.OnSetupConfirmed += () =>
         {
-           _menu!.CreateInvalidSetupBox();
-        }
+            var valid = true;
+            //if the recipient doesn't exist, say what's going wrong and mark this as invalid
+            if (!VerifyRecipient(box.TransferNoEntryBox.Text, out var number))
+            {
+                box.InvalidRecipientLabel.Visible = true;
+                valid = false;
+            }
+
+            //if the transfer amount is 0, say what's going on and mark this as invalid
+            if (box.TransferAmount == 0)
+            {
+                box.InvalidTransferAmountLabel.Visible = true;
+                valid = false;
+            }
+
+            if (!valid)
+            {
+                box.SetupConfirmedLabel.Visible = false;
+                return;
+            }
+
+            box.InvalidRecipientLabel.Visible = false;
+            box.InvalidTransferAmountLabel.Visible = false;
+            box.SetupConfirmedLabel.Visible = true;
+
+            var amount = box.TransferAmount;
+            var reason = box.TransferReasonEntryBox.Text;
+
+            SendPredictedMessage(new UpdatePoSSettingsMessage(number, amount, reason, box.MerchantNameEntryBox.Text));
+        };
     }
 
     //todo these should probably be in a helpers file?

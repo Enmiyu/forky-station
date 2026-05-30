@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Content.Shared.CCVar;
 using Content.Shared._Impstation.PersonalEconomy.Components;
 using Content.Shared._Impstation.PersonalEconomy.Events;
 using Content.Shared.Access.Components;
@@ -7,6 +8,8 @@ using Content.Shared.Containers.ItemSlots;
 using Content.Shared.Examine;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Popups;
+using Content.Shared.Station;
+using Robust.Shared.Configuration;
 using Robust.Shared.Timing;
 
 namespace Content.Shared._Impstation.PersonalEconomy.Systems;
@@ -22,6 +25,8 @@ public abstract class SharedBankingSystem : EntitySystem
     [Dependency] private readonly SharedHandsSystem _hands = null!;
     [Dependency] private readonly AccessReaderSystem _accessReader = null!;
     [Dependency] private readonly SharedPopupSystem _popup = null!;
+    [Dependency] private readonly SharedStationSystem _station = null!;
+    [Dependency] private readonly IConfigurationManager _cfg = null!;
 
     // we dont want command being targetted in this stuff
     private const string CommandDepartment = "Command";
@@ -39,6 +44,7 @@ public abstract class SharedBankingSystem : EntitySystem
         SubscribeLocalEvent<PosSystemComponent, UpdatePoSSettingsMessage>(OnPoSSettingsUpdate);
         SubscribeLocalEvent<PosSystemComponent, PoSTransactionSuccededMessage>(OnTransactionSucceded);
         SubscribeLocalEvent<PosSystemComponent, PoSTransactionFailedMessage>(OnTransactionFailed);
+        SubscribeLocalEvent<PosSystemComponent, PoSTipMessage>(OnTip);
 
         SubscribeLocalEvent<AccountManagementConsoleComponent, SetAccountStatusMessage>(OnSetAccountStatus);
         SubscribeLocalEvent<AccountManagementConsoleComponent, SetAccountSalaryMessage>(OnSetAccountSalary);
@@ -82,11 +88,44 @@ public abstract class SharedBankingSystem : EntitySystem
 
     private void OnTransactionSucceded(Entity<PosSystemComponent> ent, ref PoSTransactionSuccededMessage args)
     {
-        //customer pays with the card in their hand
+        //customer pays with the card in their hand. they must cover the subtotal plus tax
+        var tax = PosTaxFor(ent.Comp.Amount);
         var success = TryGetHeldCard(args.Actor, out var card)
-            && TryMakeTransaction(card.Comp.AccountNumber, ent.Comp.RecipientAccount, ent.Comp.Amount, ent.Comp.Reason);
+            && TryGetAccount(card.Comp.AccountNumber, out var customer)
+            && customer.Value.Comp.Balance >= ent.Comp.Amount + tax
+            && TryMakeTransaction(card.Comp.AccountNumber, ent.Comp.RecipientAccount, ent.Comp.Amount, ent.Comp.Reason, ent.Comp.MerchantName);
+
+        // the tax is skimmed to the stations scrip pool, on top of the merchants cut
+        if (success && tax > 0 && TryGetStationScripAccount(ent, out var stationAccount))
+            TryMakeTransaction(card.Comp.AccountNumber, stationAccount, tax, Loc.GetString("pos-tax-reason"));
 
         SignalPosTransaction(ent, success);
+    }
+
+    private void OnTip(Entity<PosSystemComponent> ent, ref PoSTipMessage args)
+    {
+        if (args.Amount <= 0 || !TryGetHeldCard(args.Actor, out var card))
+            return;
+
+        //the tip is an extra transfer straight to the merchant
+        TryMakeTransaction(card.Comp.AccountNumber, ent.Comp.RecipientAccount, args.Amount, Loc.GetString("pos-tip-reason"), ent.Comp.MerchantName);
+    }
+
+    // tax owed; the cvar is a percentage (4.95 = 4.95%)
+    public int PosTaxFor(int subtotal)
+    {
+        return (int) MathF.Round(subtotal * _cfg.GetCVar(CCVars.PosTax) / 100f);
+    }
+
+    private bool TryGetStationScripAccount(EntityUid pos, out AccountNumber account)
+    {
+        account = default;
+        var station = _station.GetOwningStation(pos);
+        if (station == null || !TryComp<StationPayrollComponent>(station, out var payroll) || payroll.StationAccount.Number == 0)
+            return false;
+
+        account = payroll.StationAccount;
+        return true;
     }
 
     private void SignalPosTransaction(Entity<PosSystemComponent> ent, bool success)
@@ -99,6 +138,7 @@ public abstract class SharedBankingSystem : EntitySystem
         ent.Comp.RecipientAccount = args.Recipient;
         ent.Comp.Amount = args.Amount;
         ent.Comp.Reason = args.Reason;
+        ent.Comp.MerchantName = args.MerchantName;
 
         Dirty(ent);
     }
@@ -225,7 +265,7 @@ public abstract class SharedBankingSystem : EntitySystem
     }
 
     // they gotta actually hold the card in their hand
-    private bool TryGetHeldCard(EntityUid actor, out Entity<BankCardComponent> card)
+    protected bool TryGetHeldCard(EntityUid actor, out Entity<BankCardComponent> card)
     {
         card = default;
         foreach (var held in _hands.EnumerateHeld(actor))
@@ -239,13 +279,13 @@ public abstract class SharedBankingSystem : EntitySystem
         return false;
     }
 
-    public bool TryMakeTransaction(AccountNumber sender, AccountNumber recipient, int amount, string reason)
+    public bool TryMakeTransaction(AccountNumber sender, AccountNumber recipient, int amount, string reason, string? recipientNameOverride = null)
     {
         //todo need to do something for if a transaction becomes invalid after a client confirms it
         if (!VerifyTransaction(sender, recipient, amount))
             return false;
 
-        MakeTransaction(sender, recipient, amount, reason);
+        MakeTransaction(sender, recipient, amount, reason, recipientNameOverride);
         return true;
 
     }
@@ -265,7 +305,7 @@ public abstract class SharedBankingSystem : EntitySystem
         return senderAccount.Value.Comp.Balance >= amount;
     }
 
-    private void MakeTransaction(AccountNumber sender, AccountNumber recipient, int amount, string reason)
+    private void MakeTransaction(AccountNumber sender, AccountNumber recipient, int amount, string reason, string? recipientNameOverride = null)
     {
         //this should always be true by the time this gets called but
         //could make these out variables from the verify method, maybe?
@@ -277,8 +317,10 @@ public abstract class SharedBankingSystem : EntitySystem
         senderAccount.Value.Comp.Balance -= amount;
         recipientAccount.Value.Comp.Balance += amount;
 
-        //add transactions! the "other account" recorded is each party's public account number
-        AddTransaction(senderAccount.Value, recipientAccount.Value.Comp.Name, -amount, recipient, reason);
+        //add transactions! the "other account" recorded is each party's public account number.
+        //the sender sees the override name (pos merchant name) if one was given
+        var senderSeesName = string.IsNullOrWhiteSpace(recipientNameOverride) ? recipientAccount.Value.Comp.Name : recipientNameOverride;
+        AddTransaction(senderAccount.Value, senderSeesName, -amount, recipient, reason);
         AddTransaction(recipientAccount.Value, senderAccount.Value.Comp.Name, amount, senderAccount.Value.Comp.AccountNumber, reason);
     }
 

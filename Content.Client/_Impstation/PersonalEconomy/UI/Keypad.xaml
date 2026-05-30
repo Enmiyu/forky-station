@@ -2,7 +2,7 @@
     xmlns="https://spacestation14.io"
     xmlns:controls="clr-namespace:Content.Client._Impstation.PersonalEconomy.UI">
     <BoxContainer Orientation="Vertical" HorizontalExpand="False" HorizontalAlignment="Left">
-        <LineEdit Name="NumberDisplay" HorizontalExpand="True" PlaceHolder="000000"/>
+        <LineEdit Name="NumberDisplay" HorizontalExpand="True" PlaceHolder="0000"/>
         <GridContainer Name="ButtonGrid" Columns="3" VSeparationOverride="2" HSeparationOverride="2">
             <Button Name="OneButton" Text="1" MinSize="40 40"/>
             <Button Name="TwoButton" Text="2" MinSize="40 40"/>

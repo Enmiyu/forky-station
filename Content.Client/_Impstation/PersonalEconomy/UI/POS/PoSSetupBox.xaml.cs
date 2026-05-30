@@ -34,12 +34,18 @@ public sealed partial class PoSSetupBox : Control
         SetupClearButton.OnPressed += _ => OnSetupCleared?.Invoke();
         SetupConfirmButton.OnPressed += _ => OnSetupConfirmed?.Invoke();
 
+        MerchantNameEntryBox.OnTextChanged += args =>
+        {
+            if (args.Text.Length > 32)
+                MerchantNameEntryBox.Text = args.Text[..32];
+        };
+
         //todo should probably pr a NumberEdit thing to wizden to make this less evil
         TransferNoEntryBox.OnTextChanged += args =>
         {
             var numberStr = string.Concat(args.Text.Where(char.IsDigit));
-            if (numberStr.Length > 4)
-                numberStr = numberStr[..4];
+            if (numberStr.Length > 6)
+                numberStr = numberStr[..6];
 
             TransferNoEntryBox.Text = numberStr;
         };
@@ -79,7 +85,7 @@ public sealed partial class PoSSetupBox : Control
         };
     }
 
-    public void FillOutDetails(int accountNo, int amount, string reason)
+    public void FillOutDetails(int accountNo, int amount, string reason, string merchantName)
     {
         StartDialogueBox();
 
@@ -89,6 +95,8 @@ public sealed partial class PoSSetupBox : Control
             TransferAmountEntryBox.SetText($"{amount}");
         if (!string.IsNullOrEmpty(reason))
             TransferReasonEntryBox.SetText(reason);
+        if (!string.IsNullOrEmpty(merchantName))
+            MerchantNameEntryBox.SetText(merchantName);
     }
 
     private void StartDialogueBox()

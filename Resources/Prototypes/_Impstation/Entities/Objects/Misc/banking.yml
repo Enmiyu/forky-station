@@ -32,6 +32,7 @@
     startingBalance: 0
     salary: 0
 
+# todo: look at this more critically i doubt we need this to be an ent
 - type: entity
   id: BankAccount
   name: Bank Account
@@ -191,8 +192,10 @@
     storedRotation: -90
   - type: UseDelay
     delay: 0.5
+  - type: Anchorable
   - type: ActivatableUI
     key: enum.POSUIKey.Key
+    singleUser: true
   - type: UserInterface
     interfaces:
       enum.POSUIKey.Key:

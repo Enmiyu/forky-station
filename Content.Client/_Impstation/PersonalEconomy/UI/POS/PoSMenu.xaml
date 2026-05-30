@@ -3,14 +3,14 @@
     xmlns:controls1="clr-namespace:Content.Client.UserInterface.Controls"
     xmlns:ui="clr-namespace:Content.Client._Impstation.PersonalEconomy.UI"
     Title="{Loc pos-window-title}"
-    MinSize="512 320"
-    SetSize="512 320">
+    MinSize="512 420"
+    SetSize="512 420">
     <BoxContainer Orientation="Horizontal">
-        <BoxContainer Orientation="Vertical">
+        <BoxContainer Name="MainContainer" Orientation="Vertical" VerticalExpand="True" HorizontalExpand="True"/>
+        <BoxContainer Name="KeypadContainer" Orientation="Vertical" Margin="0 12 14 12">
             <Control VerticalExpand="True"/>
             <ui:Keypad Name="UIKeypad" NumberLength="6" Access="Public"/>
             <Control VerticalExpand="True"/>
         </BoxContainer>
-        <BoxContainer Name="MainContainer" Orientation="Vertical" VerticalExpand="True" HorizontalExpand="True"/>
     </BoxContainer>
 </controls1:FancyWindow>

@@ -46,6 +46,7 @@ public sealed class ServerBankingSystem : SharedBankingSystem
     [Dependency] private SharedAudioSystem _audio = default!;
     [Dependency] private IConfigurationManager _cfg = default!;
     [Dependency] private CargoSystem _cargo = default!;
+    [Dependency] private SharedUserInterfaceSystem _ui = default!;
 
     private readonly EntProtoId _bankAccountProto = "BankAccount";
     private readonly ProtoId<StackPrototype> _scripStack = "Scrip";
@@ -65,6 +66,7 @@ public sealed class ServerBankingSystem : SharedBankingSystem
         SubscribeLocalEvent<ATMComponent, WithdrawMessage>(OnWithdraw);
         SubscribeLocalEvent<ATMComponent, DepositMessage>(OnDeposit);
         SubscribeLocalEvent<AccountManagementConsoleComponent, ConvertStationScripMessage>(OnConvertStationScrip);
+        SubscribeLocalEvent<PosSystemComponent, UnlockPosMessage>(OnUnlockPos);
         SubscribeLocalEvent<PoSWiredMessage>(OnSignal);
 
         SubscribeNetworkEvent<RequestBankPinEvent>(OnRequestPin);
@@ -100,6 +102,35 @@ public sealed class ServerBankingSystem : SharedBankingSystem
         // pull scrip from the payroll pool, drop the spesos into cargos account
         AdjustBalanceWithLog(payroll.StationAccount, -scripUsed, Loc.GetString("nanobank-cash"), Loc.GetString("nanobank-scrip-cashout-reason"));
         _cargo.UpdateBankAccount((station.Value, cargoBank), spesos, cargoBank.PrimaryAccount);
+    }
+
+    // first valid unlock claims the pos system for that account
+    private void OnUnlockPos(Entity<PosSystemComponent> ent, ref UnlockPosMessage args)
+    {
+        AccountNumber ownerToCheck;
+        if (ent.Comp.OwnerAccount.Number == 0)
+        {
+            if (!TryGetHeldCard(args.Actor, out var card))
+                return;
+            if (!TryGetAccount(card.Comp.AccountNumber, out var claimer))
+                return;
+            if (args.Pin != claimer.Value.Comp.Pin.Number)
+                return;
+
+            ent.Comp.OwnerAccount = claimer.Value.Comp.AccountNumber;
+            Dirty(ent);
+            ownerToCheck = claimer.Value.Comp.AccountNumber;
+        }
+        else
+        {
+            ownerToCheck = ent.Comp.OwnerAccount;
+        }
+
+        if (!TryGetAccount(ownerToCheck, out var owner) || args.Pin != owner.Value.Comp.Pin.Number)
+            return;
+
+        // tell just this client to open the merchant view
+        _ui.ServerSendUiMessage(ent.Owner, POSUIKey.Key, new PosUnlockedMessage(), args.Actor);
     }
 
     private void OnSignal(PoSWiredMessage msg)
@@ -179,6 +210,11 @@ public sealed class ServerBankingSystem : SharedBankingSystem
                 ("account", $"{account.Value.Comp.AccountNumber.Number:000000}"),
                 ("pin", $"{account.Value.Comp.Pin.Number:0000}")),
             ev.Mob, ev.Mob, PopupType.Medium);
+
+        // is tjere a better way to do this
+        RaiseNetworkEvent(
+            new BankPinResponseEvent(account.Value.Comp.AccountNumber.Number, account.Value.Comp.Pin.Number),
+            ev.Player);
 
         // link the station record (for criminal-status pay withholding) if one exists
         if (_inventory.TryGetSlotEntity(ev.Mob, "id", out var idUid)
@@ -289,13 +325,11 @@ public sealed class ServerBankingSystem : SharedBankingSystem
         var newAccount = Spawn(_bankAccountProto);
         if (parent != null)
             _xform.SetParent(newAccount, parent.Value);
-        //probably not *great*, but every client needs to know about every bank account at all times because of the way this whole system is set up
-        //bank accounts are relatively small (3 comps - xform, meta, bankacc) entities so it's probably fine?
-        //there'll also be like, maybe a hundred in a round max? if traitors are Doing Some Shit?
 
         // TAYDEO NOTE:
         // maybe they dont? original funky bank code just relied on a manual look up at an ATM, since clients didnt
         // really need to know anything? maybe go back to this architecture? We'll See.
+        // LATE NIGHT EDIT: WE ENDED UP KINDA DOING THIS HAHA
         _pvsOverride.AddForceSend(newAccount);
 
         //create new account

@@ -12,6 +12,7 @@ public sealed class ClientBankingSystem : SharedBankingSystem
 {
     [Dependency] private readonly InventorySystem _inventory = default!;
 
+    private int? _playerAccount;
     private int? _playerPin;
     private Label? _pinLabel;
 
@@ -25,6 +26,7 @@ public sealed class ClientBankingSystem : SharedBankingSystem
 
     private void OnPinResponse(BankPinResponseEvent ev)
     {
+        _playerAccount = ev.AccountNumber;
         _playerPin = ev.Pin;
         _pinLabel?.Text = Loc.GetString("bank-character-pin", ("pin", $"{ev.Pin:0000}"));
     }
@@ -32,7 +34,11 @@ public sealed class ClientBankingSystem : SharedBankingSystem
     // adds the player's account number and PIN to character info so they always have it
     private void OnGetCharacterInfoControls(ref CharacterInfoSystem.GetCharacterInfoControlsEvent ev)
     {
-        if (GetOwnedAccount(ev.Entity) is not { } account)
+        var accountNumber = _playerAccount;
+        if (accountNumber is null && GetOwnedAccount(ev.Entity) is { } account)
+            accountNumber = account.Comp.AccountNumber.Number;
+
+        if (accountNumber is null)
             return;
 
         var box = new BoxContainer
@@ -47,7 +53,7 @@ public sealed class ClientBankingSystem : SharedBankingSystem
         });
         box.AddChild(new Label
         {
-            Text = Loc.GetString("bank-character-account", ("number", $"{account.Comp.AccountNumber.Number:000000}")),
+            Text = Loc.GetString("bank-character-account", ("number", $"{accountNumber.Value:000000}")),
         });
 
         _pinLabel = new Label
@@ -57,8 +63,6 @@ public sealed class ClientBankingSystem : SharedBankingSystem
         box.AddChild(_pinLabel);
 
         ev.Controls.Add(box);
-
-        RaiseNetworkEvent(new RequestBankPinEvent());
     }
 
     // finds the player's account via the bank card in their PDA

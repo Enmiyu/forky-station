@@ -19,7 +19,12 @@ public sealed partial class PoSMenu : FancyWindow
     public Action<string>? OnNumberEntered;
     public Action? OnClearButtonPressed;
 
+    // when locked, the merchant view is hidden behind a PIN and we don't auto-present held cards
+    public bool LockMode;
+
     private bool _accountOpen;
+    private PoSLockBox? _lockBox;
+    private bool _lockClaimed;
 
     public PoSMenu()
     {
@@ -35,12 +40,39 @@ public sealed partial class PoSMenu : FancyWindow
     protected override void FrameUpdate(FrameEventArgs args)
     {
         CheckForCard();
+        UpdateLockState();
+    }
+
+    //an unclaimed terminal can only be claimed with a card in hand, so swap the prompt & keypad based on what's held
+    private void UpdateLockState()
+    {
+        if (!LockMode || _lockBox is null)
+            return;
+
+        var hasCard = false;
+        if (_playerMan.LocalEntity is { } realEnt && _entityManager.HasComponent<HandsComponent>(realEnt))
+        {
+            var handSystem = _entityManager.System<SharedHandsSystem>();
+            foreach (var ent in handSystem.EnumerateHeld(realEnt))
+            {
+                if (!_entityManager.HasComponent<BankCardComponent>(ent))
+                    continue;
+
+                hasCard = true;
+                break;
+            }
+        }
+
+        //already claimed -> just need the owner's PIN; unclaimed -> need a card to claim
+        var needsCard = !_lockClaimed && !hasCard;
+        KeypadContainer.Visible = !needsCard;
+        _lockBox.SetNeedsCard(needsCard);
     }
 
     private void CheckForCard()
     {
-        //if we've already got an open account, we are the server or the player entity does not have hands, return
-        if (_accountOpen || _playerMan.LocalEntity is not { } realEnt || !_entityManager.HasComponent<HandsComponent>(realEnt))
+        //if we're entering a PIN, we've already got an open account, we are the server or the player entity does not have hands, return
+        if (LockMode || _accountOpen || _playerMan.LocalEntity is not { } realEnt || !_entityManager.HasComponent<HandsComponent>(realEnt))
         {
             return;
         }
@@ -65,6 +97,21 @@ public sealed partial class PoSMenu : FancyWindow
     {
         MainContainer.RemoveAllChildren();
         _accountOpen = false;
+        LockMode = false;
+        _lockBox = null;
+    }
+
+    public PoSLockBox CreateLockBox(bool claimed)
+    {
+        ClearBox();
+        var box = new PoSLockBox();
+        MainContainer.AddChild(box);
+        LockMode = true;
+        _lockBox = box;
+        _lockClaimed = claimed;
+        //the merchant types their PIN on the keypad, same as the concept; UpdateLockState handles the present-card case
+        UpdateLockState();
+        return box;
     }
 
     public PoSSetupBox CreateSetupBox()
@@ -73,6 +120,7 @@ public sealed partial class PoSMenu : FancyWindow
         var box = new PoSSetupBox(true);
         MainContainer.AddChild(box);
         _accountOpen = true;
+        KeypadContainer.Visible = false;
         return box;
     }
 
@@ -81,6 +129,7 @@ public sealed partial class PoSMenu : FancyWindow
         ClearBox();
         var box = new PoSSetupBox(false);
         MainContainer.AddChild(box);
+        KeypadContainer.Visible = false;
         return box;
     }
 
@@ -90,6 +139,8 @@ public sealed partial class PoSMenu : FancyWindow
         var box = new PoSPaymentBox(true);
         MainContainer.AddChild(box);
         _accountOpen = true;
+        //the review screen has nothing to type, so drop the keypad
+        KeypadContainer.Visible = false;
         return box;
     }
 
@@ -98,6 +149,8 @@ public sealed partial class PoSMenu : FancyWindow
         ClearBox();
         var box = new PoSPaymentBox(false);
         MainContainer.AddChild(box);
+        //the customer types their account number here (or presents a card)
+        KeypadContainer.Visible = true;
         return box;
     }
 }

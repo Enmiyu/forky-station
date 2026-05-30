@@ -12,6 +12,9 @@ namespace Content.Shared._Impstation.PersonalEconomy.Components;
 public sealed partial class PosSystemComponent : Component
 {
     [AutoNetworkedField]
+    public AccountNumber OwnerAccount = 0;
+
+    [AutoNetworkedField]
     public AccountNumber RecipientAccount = 0;
 
     [AutoNetworkedField]
@@ -19,6 +22,10 @@ public sealed partial class PosSystemComponent : Component
 
     [AutoNetworkedField]
     public string Reason = "";
+
+    // merchant name, so it just doesnt show an account number
+    [AutoNetworkedField]
+    public string MerchantName = "";
 
     // device-link ports pulsed on a sale, so the POS can be wired to stuff (imagine a bomb lol)
     [DataField]
