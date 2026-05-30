@@ -170,6 +170,12 @@ nanobank-no-account-selected = no account selected
 nanobank-card-slot-empty = No card inserted
 nanobank-card-slot-filled = Card inserted
 
+#new business account
+nanobank-new-account-title = New Business Account
+nanobank-new-account-subtext = Create a business account for an entrepreneurial tider.
+nanobank-new-account-placeholder = Business name
+nanobank-new-account-button = Create Account
+
 #scrip cash-out
 nanobank-cash-out-button = Cash Out
 nanobank-cash-out-title = Cash Out Station Scrip

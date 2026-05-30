@@ -28,6 +28,7 @@ public sealed partial class AccountManagementMenu : FancyWindow
     public Action? OnInsertCard;
     public Action? OnEjectCard;
     public Action<AccountNumber>? OnWriteCard;
+    public Action<string>? OnCreateAccount;
     public Action<string, PaymentStatus, string>? OnSetDepartmentStatus;
     public Action<string, int>? OnGrantDepartmentBonus;
     public Action<int>? OnCashOut;
@@ -62,6 +63,15 @@ public sealed partial class AccountManagementMenu : FancyWindow
         {
             if (_selected != null)
                 OnWriteCard?.Invoke(_selected.Value);
+        };
+        CreateAccountButton.OnPressed += _ =>
+        {
+            var name = NewAccountNameEdit.Text.Trim();
+            if (name.Length == 0)
+                return;
+
+            OnCreateAccount?.Invoke(name);
+            NewAccountNameEdit.Clear();
         };
 
         CashOutButton.OnPressed += _ => ShowCashOut(true);
@@ -300,6 +310,8 @@ public sealed partial class AccountManagementMenu : FancyWindow
         CardEjectButton.Disabled = card == null;
         // can only write with both a card present and an account selected
         WriteCardButton.Disabled = card == null || _selected == null;
+        // a new business account just needs a card to write onto
+        CreateAccountButton.Disabled = card == null;
     }
 
     private void ShowDetail(BankAccountComponent? comp)

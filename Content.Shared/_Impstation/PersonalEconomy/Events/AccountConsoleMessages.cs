@@ -34,6 +34,12 @@ public sealed class WriteCardMessage(AccountNumber account) : BoundUserInterface
     public AccountNumber Account = account;
 }
 
+[Serializable, NetSerializable]
+public sealed class CreateBusinessAccountMessage(string name) : BoundUserInterfaceMessage
+{
+    public string Name = name;
+}
+
 // cashes the given amount of the station's scrip into physical spesos at the console's rate
 [Serializable, NetSerializable]
 public sealed class ConvertStationScripMessage(int amount) : BoundUserInterfaceMessage

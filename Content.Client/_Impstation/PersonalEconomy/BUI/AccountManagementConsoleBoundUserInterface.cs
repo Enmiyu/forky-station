@@ -40,6 +40,7 @@ public sealed class AccountManagementConsoleBoundUserInterface : BoundUserInterf
         _window.OnInsertCard += () => SendPredictedMessage(new InsertCardMessage());
         _window.OnEjectCard += () => SendPredictedMessage(new EjectCardMessage());
         _window.OnWriteCard += account => SendPredictedMessage(new WriteCardMessage(account));
+        _window.OnCreateAccount += name => SendMessage(new CreateBusinessAccountMessage(name));
         _window.OnSetDepartmentStatus += (dept, status, reason) =>
             SendPredictedMessage(new SetDepartmentStatusMessage(dept, status, reason));
         _window.OnGrantDepartmentBonus += (dept, amount) =>

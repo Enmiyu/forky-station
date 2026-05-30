@@ -113,6 +113,17 @@
                 <Control MinHeight="12"/>
 
                 <Button Name="WriteCardButton" Text="{Loc nanobank-write-card-button}"/>
+
+                <cc:HSeparator Margin="0 12"/>
+
+                <Label Text="{Loc nanobank-new-account-title}" StyleClasses="LabelHeading"/>
+                <Label Text="{Loc nanobank-new-account-subtext}" StyleClasses="LabelSubText"/>
+                <Control MinHeight="6"/>
+                <BoxContainer Orientation="Horizontal">
+                    <LineEdit Name="NewAccountNameEdit" PlaceHolder="{Loc nanobank-new-account-placeholder}" HorizontalExpand="True"/>
+                    <Control MinWidth="4"/>
+                    <Button Name="CreateAccountButton" Text="{Loc nanobank-new-account-button}"/>
+                </BoxContainer>
             </BoxContainer>
         </BoxContainer>
 

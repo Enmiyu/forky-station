@@ -66,6 +66,7 @@ public sealed class ServerBankingSystem : SharedBankingSystem
         SubscribeLocalEvent<ATMComponent, WithdrawMessage>(OnWithdraw);
         SubscribeLocalEvent<ATMComponent, DepositMessage>(OnDeposit);
         SubscribeLocalEvent<AccountManagementConsoleComponent, ConvertStationScripMessage>(OnConvertStationScrip);
+        SubscribeLocalEvent<AccountManagementConsoleComponent, CreateBusinessAccountMessage>(OnCreateBusinessAccount);
         SubscribeLocalEvent<PosSystemComponent, UnlockPosMessage>(OnUnlockPos);
         SubscribeLocalEvent<PoSWiredMessage>(OnSignal);
 
@@ -102,6 +103,25 @@ public sealed class ServerBankingSystem : SharedBankingSystem
         // pull scrip from the payroll pool, drop the spesos into cargos account
         AdjustBalanceWithLog(payroll.StationAccount, -scripUsed, Loc.GetString("nanobank-cash"), Loc.GetString("nanobank-scrip-cashout-reason"));
         _cargo.UpdateBankAccount((station.Value, cargoBank), spesos, cargoBank.PrimaryAccount);
+    }
+
+    // creates an account for a business so players can register stuff separate from their personal acc
+    private void OnCreateBusinessAccount(Entity<AccountManagementConsoleComponent> ent, ref CreateBusinessAccountMessage args)
+    {
+        if (!ConsoleAllowed(ent, args.Actor))
+            return;
+
+        var name = args.Name.Trim();
+        if (name.Length == 0)
+            return;
+
+        // card needs to be slotted so it can mint it there
+        var cardUid = _itemSlots.GetItemOrNull(ent, ent.Comp.CardSlotId);
+        if (cardUid == null || !TryComp<BankCardComponent>(cardUid, out var cardComp))
+            return;
+
+        var account = CreateNewAccount(name, ResolveAccountParent(ent));
+        WriteAccountToCard((cardUid.Value, cardComp), account.Comp.AccountNumber);
     }
 
     // first valid unlock claims the pos system for that account

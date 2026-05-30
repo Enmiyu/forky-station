@@ -73,16 +73,12 @@ public sealed partial class PoSMenu : FancyWindow
             return;
         }
 
-        //go over everything that's held by the player
         var handSystem = _entityManager.System<SharedHandsSystem>();
-        var held = handSystem.EnumerateHeld(realEnt);
-        foreach (var ent in held)
+        foreach (var ent in handSystem.EnumerateHeld(realEnt))
         {
-            //if it's not a bank card, continue
             if (!_entityManager.TryGetComponent<BankCardComponent>(ent, out var comp))
                 continue;
 
-            //present the held card. don't touch the keypad display - it's only for the merchant PIN now
             OnNumberEntered?.Invoke($"{comp.AccountNumber.Number:000000}");
             break;
         }
