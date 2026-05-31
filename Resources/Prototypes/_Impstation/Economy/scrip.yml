@@ -4,7 +4,6 @@
   name: scrip
   description: Money that can be used exclusively on NanoTrasen stations.
   components:
-  - type: Cash
   - type: Item
     shape:
     - 0,0,1,0
@@ -20,25 +19,21 @@
     count: 1
     baseLayer: base
     layerStates:
-    - cash
-    - cash_10
-    - cash_100
-    - cash_500
-    - cash_1000
-    - cash_5000
-    - cash_10000
-    - cash_25000
-    - cash_50000
-    - cash_100000
-    - cash_1000000
+    - scrip
+    - scrip_10
+    - scrip_100
+    - scrip_500
+    - scrip_1000
+    - scrip_5000
+    - scrip_10000
     layerFunction: Threshold
   - type: StackLayerThreshold
-    thresholds: [10, 100, 500, 1000, 5000, 10000, 25000, 50000, 100000, 1000000]
+    thresholds: [10, 100, 500, 1000, 5000, 10000]
   - type: Sprite
-    sprite: Objects/Economy/cash.rsi
-    state: cash
+    sprite: _Impstation/Objects/Economy/scrip.rsi
+    state: scrip
     layers:
-    - state: cash
+    - state: scrip
       map: ["base"]
   - type: Physics
     bodyType: Dynamic
@@ -58,13 +53,13 @@
   name: materials-scrip
   unit: materials-unit-bill
   stackEntity: Scrip
-  icon: { sprite: /Textures/Objects/Economy/cash.rsi, state: cash }
+  icon: { sprite: _Impstation/Objects/Economy/scrip.rsi, state: scrip }
   price: 1
 
 - type: stack
   id: Scrip
   name: stack-scrip
-  icon: { sprite: /Textures/Objects/Economy/cash.rsi, state: cash }
+  icon: { sprite: _Impstation/Objects/Economy/scrip.rsi, state: scrip }
   spawn: Scrip
 
 - type: entity
@@ -73,8 +68,8 @@
   suffix: 10
   components:
   - type: Icon
-    sprite: Objects/Economy/cash.rsi
-    state: cash_10
+    sprite: _Impstation/Objects/Economy/scrip.rsi
+    state: scrip
   - type: Stack
     count: 10
 
@@ -84,8 +79,8 @@
   suffix: 100
   components:
   - type: Icon
-    sprite: Objects/Economy/cash.rsi
-    state: cash_100
+    sprite: _Impstation/Objects/Economy/scrip.rsi
+    state: scrip
   - type: Stack
     count: 100
 
@@ -95,8 +90,8 @@
   suffix: 500
   components:
   - type: Icon
-    sprite: Objects/Economy/cash.rsi
-    state: cash_500
+    sprite: _Impstation/Objects/Economy/scrip.rsi
+    state: scrip_500
   - type: Stack
     count: 500
 
@@ -106,8 +101,8 @@
   suffix: 1000
   components:
   - type: Icon
-    sprite: Objects/Economy/cash.rsi
-    state: cash_1000
+    sprite: _Impstation/Objects/Economy/scrip.rsi
+    state: scrip_1000
   - type: Stack
     count: 1000
 
@@ -117,8 +112,8 @@
   suffix: 5000
   components:
   - type: Icon
-    sprite: Objects/Economy/cash.rsi
-    state: cash_5000
+    sprite: _Impstation/Objects/Economy/scrip.rsi
+    state: scrip_5000
   - type: Stack
     count: 5000
 
@@ -128,7 +123,7 @@
   suffix: 10000
   components:
   - type: Icon
-    sprite: Objects/Economy/cash.rsi
-    state: cash_10000
+    sprite: _Impstation/Objects/Economy/scrip.rsi
+    state: scrip_10000
   - type: Stack
     count: 10000
