@@ -18,7 +18,7 @@ public sealed partial class JetpackSystem : SharedJetpackSystem
     [Dependency] private readonly SharedMapSystem _mapSystem = default!;
     [Dependency] private readonly ParticleSystem _particles = default!; // _Starfall
 
-    private static readonly ProtoId<ParticleEffectPrototype> JetpackEffect = "JetpackTrail"; // _Starfall # Funky Changed to JetpackTrail
+    private static readonly ProtoId<ParticleEffectPrototype> JetpackEffect = "JetpackTrail"; // _Starfall // Funky Adjusted to JetpackTrail
     private readonly Dictionary<EntityUid, ActiveEmitter> _activeJetpackParticles = new(); // _Starfall
 
     public override void Initialize()
