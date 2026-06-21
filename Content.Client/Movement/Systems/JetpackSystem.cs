@@ -3,19 +3,23 @@ using Content.Shared.Clothing.EntitySystems;
 using Content.Shared.Movement.Components;
 using Content.Shared.Movement.Systems;
 using Robust.Client.GameObjects;
-using Robust.Shared.Map;
-using Robust.Shared.Map.Components;
-using Robust.Shared.Physics.Components;
 using Robust.Shared.Timing;
+using Content.Client._Starfall.Particles; // _Starfall
+using Content.Shared._Starfall.Particles; // _Starfall
+using Robust.Shared.Prototypes;
 
 namespace Content.Client.Movement.Systems;
 
 public sealed partial class JetpackSystem : SharedJetpackSystem
 {
-    [Dependency] private IGameTiming _timing = default!;
-    [Dependency] private ClothingSystem _clothing = default!;
-    [Dependency] private SharedTransformSystem _transform = default!;
-    [Dependency] private SharedMapSystem _mapSystem = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly ClothingSystem _clothing = default!;
+    [Dependency] private readonly SharedTransformSystem _transform = default!;
+    [Dependency] private readonly SharedMapSystem _mapSystem = default!;
+    [Dependency] private readonly ParticleSystem _particles = default!; // _Starfall
+
+    private static readonly ProtoId<ParticleEffectPrototype> JetpackEffect = "JetpackTrail"; // _Starfall # Funky Changed to JetpackTrail
+    private readonly Dictionary<EntityUid, ActiveEmitter> _activeJetpackParticles = new(); // _Starfall
 
     public override void Initialize()
     {
@@ -29,12 +33,33 @@ public sealed partial class JetpackSystem : SharedJetpackSystem
         return false;
     }
 
+    // _Starfall Start
     private void OnJetpackAppearance(EntityUid uid, JetpackComponent component, ref AppearanceChangeEvent args)
     {
         Appearance.TryGetData<bool>(uid, JetpackVisuals.Enabled, out var enabled, args.Component);
 
         if (TryComp<ClothingComponent>(uid, out var clothing))
             _clothing.SetEquippedPrefix(uid, enabled ? "on" : null, clothing);
+
+        if (enabled)
+        {
+            // Already running?
+            if (_activeJetpackParticles.ContainsKey(uid))
+                return;
+
+            var emitter = _particles.CreateParticle(JetpackEffect, uid);
+
+            if (emitter != null)
+                _activeJetpackParticles[uid] = emitter;
+        }
+        else
+        {
+            if (_activeJetpackParticles.TryGetValue(uid, out var emitter))
+            {
+                _particles.RemoveParticle(emitter);
+                _activeJetpackParticles.Remove(uid);
+            }
+        }
     }
 
     public override void Update(float frameTime)
@@ -43,53 +68,6 @@ public sealed partial class JetpackSystem : SharedJetpackSystem
 
         if (!_timing.IsFirstTimePredicted)
             return;
-
-        // TODO: Please don't copy-paste this I beg
-        // make a generic particle emitter system / actual particles instead.
-        var query = EntityQueryEnumerator<ActiveJetpackComponent, TransformComponent>();
-
-        while (query.MoveNext(out var uid, out var comp, out var xform))
-        {
-            if (_transform.InRange(xform.Coordinates, comp.LastCoordinates, comp.MaxDistance))
-            {
-                if (_timing.CurTime < comp.TargetTime)
-                    continue;
-            }
-
-            comp.LastCoordinates = _transform.GetMoverCoordinates(xform.Coordinates);
-            comp.TargetTime = _timing.CurTime + TimeSpan.FromSeconds(comp.EffectCooldown);
-
-            CreateParticles(uid);
-        }
     }
-
-    private void CreateParticles(EntityUid uid)
-    {
-        var uidXform = Transform(uid);
-        // Don't show particles unless the user is moving.
-        if (Container.TryGetContainingContainer((uid, uidXform, null), out var container) &&
-            TryComp<PhysicsComponent>(container.Owner, out var body) &&
-            body.LinearVelocity.LengthSquared() < 1f)
-        {
-            return;
-        }
-
-        var coordinates = uidXform.Coordinates;
-        var gridUid = _transform.GetGrid(coordinates);
-
-        if (TryComp<MapGridComponent>(gridUid, out var grid))
-        {
-            coordinates = new EntityCoordinates(gridUid.Value, _mapSystem.WorldToLocal(gridUid.Value, grid, _transform.ToMapCoordinates(coordinates).Position));
-        }
-        else if (uidXform.MapUid != null)
-        {
-            coordinates = new EntityCoordinates(uidXform.MapUid.Value, _transform.GetWorldPosition(uidXform));
-        }
-        else
-        {
-            return;
-        }
-
-        Spawn("JetpackEffect", coordinates);
-    }
+    // _Starfall End
 }

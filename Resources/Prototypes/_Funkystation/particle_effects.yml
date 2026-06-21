@@ -1,0 +1,44 @@
+- type: particleEffect
+  id: JetpackTrail
+  sprite:
+    sprite: _Funkystation/Effects/jetpack_medi_holo.rsi
+    state: jetpack_medi_holo
+  shader: unshaded
+  startColor: "#FFFFFFFF"
+  endColor: "#7E2CA2FF"
+  lifetime: 2
+  lifetimeVariance: 0
+  speed: 0.5
+  speedVariance: 0
+  particleSize: 0.5
+  sizeVariance: 0.25
+  sizeOverLifetime:
+    - time: 0.0
+      value: 0.95
+    - time: 1.0
+      value: 0.75
+    - time: 1.5
+      value: 0.5
+  alphaOverLifetime:
+    - time: 0.0
+      value: 0.9
+    - time: 0.5
+      value: 0.75
+    - time: 1.5
+      value: 0.35
+  emissionRate: 10
+  maxCount: 32
+  burst: false
+  duration: 0
+  gravity: 0
+  drag: 0
+  inheritVelocity: -0.3 # Making them fly opposite of movement
+  noiseStrength: 0.2
+  noiseFrequency: 0.5
+  spreadAngle: 45
+  emitAngle: 180
+  startRotationVariance: 45
+  rotationSpeedVariance: 0
+  shape: # Some randomisation in the spawn point
+    type: Point
+    radius: 0.25
