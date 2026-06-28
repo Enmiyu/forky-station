@@ -1,8 +1,10 @@
 - type: particleEffect
   id: JetpackTrail
   sprite:
-    sprite: _Funkystation/Effects/jetpack_medi_holo.rsi
-    state: jetpack_medi_holo
+    sprite: _Funkystation/Effects/jetpacktrail.rsi
+    state: jetpacktrail
+    drawdepth: -1000 # Attempt at making trail render under players
+  RenderLayer: -1000 # See above // I put both of these in every possible way I could think of and it changes nothing but I got told to add it anyway
   shader: unshaded
   startColor: "#FFFFFFFF"
   endColor: "#7E2CA2FF"
@@ -32,7 +34,7 @@
   duration: 0
   gravity: 0
   drag: 0
-  inheritVelocity: -0.3 # Making them fly opposite of movement
+  inheritVelocity: -0.3 # Making particles fly opposite of movement
   noiseStrength: 0.2
   noiseFrequency: 0.5
   spreadAngle: 45
