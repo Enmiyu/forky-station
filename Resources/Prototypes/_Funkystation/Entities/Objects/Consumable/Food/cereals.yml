@@ -1,0 +1,64 @@
+- type: entity
+  abstract: true
+  parent: BaseStorageItem
+  id: FoodCerealBase
+  description: A crunchy start to your day.
+  components:
+  - type: UseDelay
+    delay: 2
+  - type: Sprite
+    sprite: Objects/Consumable/Food/Cereals/cereal.rsi
+  - type: Storage
+    grid:
+    - 0,0,1,1
+  - type: Item
+    sprite: Objects/Consumable/Food/Cereals/cereal_bag.rsi
+    size: Small
+    heldPrefix: box
+  - type: EntityTableContainerFill
+    containers:
+      storagebase:
+        id: FoodCerealBagBase
+
+- type: entity
+  name: boritos
+  parent: FoodSnackBase
+  id: FoodSnackBoritos
+  description: Crunchy, salty tortilla chips. You could probably make nachos with these.
+  components:
+  - type: FlavorProfile
+    flavors:
+      - crunchy
+      - chocolate
+  - type: Sprite
+    state: gorilla_crunch
+  - type: Item
+    size: Small
+    shape:
+    - 0,0,1,1
+    heldPrefix: boritos
+  - type: Edible
+    trash:
+    - FoodPacketCerealTrash
+
+- type: entity
+  parent: FoodCerealBase
+  id: FoodCerealGorillaCrunch
+  name: gorilla crunch
+  description: Tap into your primal side!
+  components:
+  - type: Sprite
+    sprite: Objects/Consumable/Food/Cereals/gorilla_crunch.rsi
+  - type: Storage
+    grid:
+    - 0,0,1,1
+  - type: Item
+    sprite: Objects/Consumable/Food/Cereals/gorilla_crunch_bag.rsi
+    size: Small
+    heldPrefix: box
+  - type: EntityTableContainerFill
+    containers:
+      storagebase:
+        id: FoodCerealBagGorillaCrunch
+
+
