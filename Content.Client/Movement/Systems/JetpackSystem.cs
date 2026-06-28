@@ -12,14 +12,14 @@ namespace Content.Client.Movement.Systems;
 
 public sealed partial class JetpackSystem : SharedJetpackSystem
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly ClothingSystem _clothing = default!;
-    [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly SharedMapSystem _mapSystem = default!;
-    [Dependency] private readonly ParticleSystem _particles = default!; // _Starfall
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private ClothingSystem _clothing = default!;
+    [Dependency] private SharedTransformSystem _transform = default!;
+    [Dependency] private SharedMapSystem _mapSystem = default!;
+    [Dependency] private ParticleSystem _particles = default!; // _Starfall
 
-    private static readonly ProtoId<ParticleEffectPrototype> JetpackEffect = "JetpackTrail"; // _Starfall // Funky Adjusted to JetpackTrail
-    private readonly Dictionary<EntityUid, ActiveEmitter> _activeJetpackParticles = new(); // _Starfall
+    private static ProtoId<ParticleEffectPrototype> JetpackEffect = "JetpackTrail"; // _Starfall // Funky Adjusted to JetpackTrail
+    private Dictionary<EntityUid, ActiveEmitter> _activeJetpackParticles = new(); // _Starfall
 
     public override void Initialize()
     {
