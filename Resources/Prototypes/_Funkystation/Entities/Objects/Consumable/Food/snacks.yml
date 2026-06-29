@@ -1,19 +1,20 @@
-# Cereal doesnt strictly fit into the existing categories but its close enough to snacks.
+# Cereal doesnt strictly fit into the existing categories but its close enough to being a snack.
 
 - type: entity
   abstract: true
-  parent: [ BaseStorageItem, BaseBagOpenClose ]
+  parent: [ BaseStorageItem, ReagentPacket ]
   id: FoodCerealBase
   description: A non-descript start to your day.
   components:
-  - type: Sprite
-    sprite: Objects/Consumable/Food/snacks.rsi
-  - type: Storage
+  - type: Storage # Lets you store a 2x2 inside your cereal box. I just think its funny. You cant eat out of it while theres something stored.
     grid:
     - 0,0,1,1
+    clickInsert: false # Forces players to insert things into storage manually, which allows for poisoning the cereal.
   - type: Item
     sprite: Objects/Consumable/Food/snacks.rsi
-    state: generic_cereal
+    layers:
+    - state: generic-cereal-box # Doesnt exist, example text.
+      map: ["enum.OpenableVisuals.Layer"]
     size: Normal
     shape:
     - 0,0,1,1
@@ -30,32 +31,28 @@
     visuals:
       enum.OpenableVisuals.Opened:
         enum.OpenableVisuals.Layer:
-          True: {state: "gorilla-crunch-open"} # box after opening
-          False: {state: "gorilla-crunch-box"} # box by default
+          True: {state: gorilla-crunch-open} # box after opening
+          False: {state: gorilla-crunch-box} # closed, default
   - type: Sprite
+    sprite: _Funkystation/Objects/Consumables/Food/snacks.rsi
     layers:
     - state: gorilla-crunch-box
-      map: ["enum.OpenableVisuals.Layer"]
-  - type: Storage
-    grid:
-    - 0,0,1,1
+      map: [enum.OpenableVisuals.Layer]
   - type: Item
-    sprite: _Funkystation/Objects/Consumable/Food/snacks.rsi
+    sprite: _Funkystation/Objects/Consumables/Food/snacks.rsi
     state: gorilla-crunch-box
     size: Normal
     shape:
     - 0,0,1,1
-    heldPrefix: gorilla crunch
+    heldPrefix: gorilla crunch box
   - type: FlavorProfile
     flavors:
       - meaty
       - jungle
   - type: Solution
-    solution: # This creates a total 120u, like flour bags, which splits into 4 bowls (30u) of 10u each
+    solution: # Total 150u which splits into 3 full bowls (50u). Provides 150 nutrition for a full bowl, or 2.5x as much as a nutribrick.
       reagents:
-      - ReagentId: Protein
-        Quantity: 40
-      - ReagentId: Nutriment
-        Quantity: 40
-      - ReagentId: Sugar
-        Quantity: 40
+      - ReagentId: Protein # Almost entirely protein. This stuff will get you gains.
+        Quantity: 125
+      - ReagentId: Vitamins
+        Quantity: 25
