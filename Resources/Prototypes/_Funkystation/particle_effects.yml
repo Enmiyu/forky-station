@@ -3,8 +3,7 @@
   sprite:
     sprite: _Funkystation/Effects/jetpacktrail.rsi
     state: jetpacktrail
-    drawdepth: -1000 # Attempt at making trail render under players
-  RenderLayer: -1000 # See above // I put both of these in every possible way I could think of and it changes nothing but I got told to add it anyway
+    drawdepth: -1000 # Attempt at making trail render under players. Dont think it works but I got told to keep it anyway
   shader: unshaded
   startColor: "#FFFFFFFF"
   endColor: "#7E2CA2FF"
