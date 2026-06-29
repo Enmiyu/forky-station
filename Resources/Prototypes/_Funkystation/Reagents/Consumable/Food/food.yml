@@ -8,6 +8,6 @@
   color: "#FFFFFF"
   metabolisms:
     Digestion:
-      metabolites:
+      metabolites: # This SHOULD make it break down into protein and vitamin as its digested but i may be stupid
         Protein: 0.8
         Vitamin: 0.2

@@ -32,16 +32,16 @@
       - meaty
       - jungle
   - type: Solution
-    solution: # Lets you get 3 bowls if you dont eat any
+    solution:
       reagents:
       - ReagentId: GorillaCrunch
-        Quantity: 120
+        Quantity: 120 # Lets you get 3 bowls if you dont eat any
 
 - type: entity
   parent: FoodBowlBase
-  id: BowlGorillaCrunch
+  id: FoodBowlGorillaCrunch
   name: gorilla crunch bowl
-  description: Made with 100% organic gorilla!
+  description: For when you REALLY need to make some gains. Made with 100% organic gorilla!
   components:
   - type: FlavorProfile
     flavors:

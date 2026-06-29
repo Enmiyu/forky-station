@@ -4,7 +4,7 @@
   result: BowlGorillaCrunch
   time: 10
   reagents:
-    GorillaCrunch: 40
+    GorillaCrunch: 40 # i have to fucking microwave cereal i hate it here
     Milk: 10
   solids:
     FoodBowlBig: 1
