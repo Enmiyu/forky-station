@@ -1,28 +1,6 @@
-# Cereal doesnt strictly fit into the existing categories but its close enough to being a snack.
-
 - type: entity
-  abstract: true
   parent: [ BaseStorageItem, ReagentPacket ]
-  id: FoodCerealBase
-  description: A non-descript start to your day.
-  components:
-  - type: Storage # Lets you store a 2x2 inside your cereal box. I just think its funny. You cant eat out of it while theres something stored.
-    grid:
-    - 0,0,1,1
-    clickInsert: false # Forces players to insert things into storage manually, which allows for poisoning the cereal.
-  - type: Item
-    sprite: Objects/Consumable/Food/snacks.rsi
-    layers:
-    - state: generic-cereal-box # Doesnt exist, example text.
-      map: ["enum.OpenableVisuals.Layer"]
-    size: Normal
-    shape:
-    - 0,0,1,1
-    heldPrefix: cereal box
-
-- type: entity
-  parent: FoodCerealBase
-  id: FoodCerealGorillaCrunch
+  id: FoodCerealGorillaCrunch # Cereal doesnt strictly fit into the existing categories but its close enough to being a snack.
   name: gorilla crunch
   description: Tap into your primal side!
   components:
@@ -38,6 +16,10 @@
     layers:
     - state: gorilla-crunch-box
       map: [enum.OpenableVisuals.Layer]
+  - type: Storage # Lets you store a 2x2 inside the cereal box. I just think its funny. You cant eat out of it while theres something stored.
+    grid:
+    - 0,0,1,1
+    clickInsert: false # Forces players to insert things into storage manually, which allows for poisoning the cereal.
   - type: Item
     sprite: _Funkystation/Objects/Consumables/Food/snacks.rsi
     state: gorilla-crunch-box
@@ -50,9 +32,28 @@
       - meaty
       - jungle
   - type: Solution
-    solution: # Total 150u which splits into 3 full bowls (50u). Provides 150 nutrition for a full bowl, or 2.5x as much as a nutribrick.
+    solution: # Lets you get 3 bowls if you dont eat any
       reagents:
-      - ReagentId: Protein # Almost entirely protein. This stuff will get you gains.
-        Quantity: 125
-      - ReagentId: Vitamins
-        Quantity: 25
+      - ReagentId: GorillaCrunch
+        Quantity: 120
+
+- type: entity
+  parent: FoodBowlBig
+  id: BowlGorillaCrunch
+  name: gorilla crunch bowl
+  description: Made with 100% organic gorilla!
+  components:
+  - type: FlavorProfile
+    flavors:
+      - meaty
+      - jungle
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: GorillaCrunch
+        Quantity: 40
+      - ReagentId: Milk
+        Quantity: 10
+  - type: Sprite
+    sprite: _Funkystation/Objects/Consumable/Food/bowl.rsi
+    state: gorilla-crunch

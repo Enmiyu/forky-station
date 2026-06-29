@@ -1,0 +1,13 @@
+- type: reagent
+  id: GorillaCrunch
+  name: reagent-name-gorillacrunch
+  group: Foods
+  desc: reagent-desc-gorillacrunch
+  physicalDesc: reagent-physical-desc-chunky
+  flavor: protein
+  color: "#FFFFFF"
+  metabolisms:
+    Digestion:
+      metabolites:
+        Protein: 0.8
+        Vitamin: 0.2
