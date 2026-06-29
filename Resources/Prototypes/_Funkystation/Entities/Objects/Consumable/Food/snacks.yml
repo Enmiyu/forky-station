@@ -1,0 +1,61 @@
+# Cereal doesnt strictly fit into the existing categories but its close enough to snacks.
+
+- type: entity
+  abstract: true
+  parent: [ BaseStorageItem, BaseBagOpenClose ]
+  id: FoodCerealBase
+  description: A non-descript start to your day.
+  components:
+  - type: Sprite
+    sprite: Objects/Consumable/Food/snacks.rsi
+  - type: Storage
+    grid:
+    - 0,0,1,1
+  - type: Item
+    sprite: Objects/Consumable/Food/snacks.rsi
+    state: generic_cereal
+    size: Normal
+    shape:
+    - 0,0,1,1
+    heldPrefix: cereal box
+
+- type: entity
+  parent: FoodCerealBase
+  id: FoodCerealGorillaCrunch
+  name: gorilla crunch
+  description: Tap into your primal side!
+  components:
+  - type: Appearance
+  - type: GenericVisualizer
+    visuals:
+      enum.OpenableVisuals.Opened:
+        enum.OpenableVisuals.Layer:
+          True: {state: "gorilla-crunch-open"} # box after opening
+          False: {state: "gorilla-crunch-box"} # box by default
+  - type: Sprite
+    layers:
+    - state: gorilla-crunch-box
+      map: ["enum.OpenableVisuals.Layer"]
+  - type: Storage
+    grid:
+    - 0,0,1,1
+  - type: Item
+    sprite: _Funkystation/Objects/Consumable/Food/snacks.rsi
+    state: gorilla-crunch-box
+    size: Normal
+    shape:
+    - 0,0,1,1
+    heldPrefix: gorilla crunch
+  - type: FlavorProfile
+    flavors:
+      - meaty
+      - jungle
+  - type: Solution
+    solution: # This creates a total 120u, like flour bags, which splits into 4 bowls (30u) of 10u each
+      reagents:
+      - ReagentId: Protein
+        Quantity: 40
+      - ReagentId: Nutriment
+        Quantity: 40
+      - ReagentId: Sugar
+        Quantity: 40
