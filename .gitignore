@@ -319,6 +319,3 @@ error.glsl
 
 # C# Dev Kit cache file
 *.lscache
-
-# that one file about random char so i dont have to keep doing commits
-Resources/ConfigPresets/Build/development.toml
