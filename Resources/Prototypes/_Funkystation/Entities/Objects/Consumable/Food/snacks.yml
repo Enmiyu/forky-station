@@ -22,8 +22,6 @@
     - 0,0,1,1
     clickInsert: false # Forces players to insert things into storage manually, which allows for poisoning the cereal.
   - type: Item
-    sprite: _Funkystation/Objects/Consumable/Food/snacks.rsi
-    state: gorilla-crunch-box
     size: Normal
     shape:
     - 0,0,1,1
