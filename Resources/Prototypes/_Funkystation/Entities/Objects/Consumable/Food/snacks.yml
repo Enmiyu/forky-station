@@ -17,6 +17,7 @@
     - state: gorilla-crunch-box
       map: [enum.OpenableVisuals.Layer]
   - type: Storage # Lets you store a 2x2 inside the cereal box. I just think its funny. You cant eat out of it while theres something stored.
+    maxItemSize: Small # Originally had it set to normal but it got a little silly.
     grid:
     - 0,0,1,1
     clickInsert: false # Forces players to insert things into storage manually, which allows for poisoning the cereal.

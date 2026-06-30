@@ -8,6 +8,6 @@
   color: "#FFFFFF"
   metabolisms:
     Digestion:
-      metabolites: # This SHOULD make it break down into protein and vitamin as its digested but i may be stupid
+      metabolites: # Breaks down into protein + vitamin as its digested. This shit is almost entirely protein you will get some crazy gains
         Protein: 0.8
         Vitamin: 0.2
