@@ -600,6 +600,7 @@
     energy: 3
 
 #ANTAG HARDSUITS
+# Funky Amped the radius and energy of syndicate suit headlights.
 #Blood-red Hardsuit
 - type: entity
   parent: [ ClothingHeadHardsuitBase, ClothingHeadSuitWithLightBase ]
