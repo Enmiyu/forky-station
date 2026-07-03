@@ -612,6 +612,8 @@
   - type: Clothing
     sprite: Clothing/Head/Hardsuits/syndicate.rsi
   - type: PointLight
+    radius: 5
+    energy: 2
     color: green
   - type: PressureProtection
     highPressureMultiplier: 0.08
@@ -639,6 +641,8 @@
   - type: Clothing
     sprite: Clothing/Head/Hardsuits/syndiemedic.rsi
   - type: PointLight
+    radius: 5
+    energy: 2
     color: green
   - type: PressureProtection
     highPressureMultiplier: 0.08
@@ -663,6 +667,8 @@
   - type: Clothing
     sprite: Clothing/Head/Hardsuits/syndieelite.rsi
   - type: PointLight
+    radius: 5
+    energy: 2
     color: red
   - type: PressureProtection
     highPressureMultiplier: 0.08
@@ -695,6 +701,8 @@
   - type: Clothing
     sprite: Clothing/Head/Hardsuits/syndiecommander.rsi
   - type: PointLight
+    radius: 5
+    energy: 2
     color: green
   - type: PressureProtection
     highPressureMultiplier: 0.08
