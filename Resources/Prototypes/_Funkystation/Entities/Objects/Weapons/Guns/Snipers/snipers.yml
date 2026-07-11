@@ -5,41 +5,44 @@
   description: A true relic, the Kardashev-Mosin has served in nearly every armed conflict since its creation 670 years ago. The bolt-action design of the rifle remains virtually identical to its original design, whether used for hunting, sniping, or endless trench warfare. Loads 10 rounds of .30 rifle.
   components:
   - type: Sprite
-    sprite: Objects/Weapons/Guns/Snipers/bolt_gun_wood.rsi
+    sprite: _Funkystation/Objects/Weapons/Guns/Snipers/bolt_gun_wood.rsi
     layers:
     - state: base
-    - state: base1
-      map: [ "enum.SolutionContainerLayers.Fill" ]
-      visible: false
+      map: ["enum.BreechVisuals.Open"]
+  - type: Clothing
+    sprite: _Funkystation/Objects/Weapons/Guns/Snipers/bolt_gun_wood.rsi
+    quickEquip: false
+    slots:
+    - Back
+    - suitStorage
   - type: BreechLoaded
     needOpenClose: true
     openSound:
       path: "/Audio/_RMC14/Weapons/Guns/Breech/pkd_open_chamber.ogg"
     closeSound:
       path: "/Audio/_RMC14/Weapons/Guns/Breech/pkd_close_chamber.ogg"
+  - type: Appearance
+  - type: GenericVisualizer
+    visuals:
+      enum.BreechVisuals.Open:
+        enum.BreechVisuals.Open:
+          True: {state: bolt-open}
+          False: {state: base}
   - type: Gun
-    fireRate: 1.5
+    fireRate: 1.5 # Funky Buffed to make more fun with bolt action
     selectedMode: SemiAuto
     availableModes:
     - SemiAuto
     soundGunshot:
       path: /Audio/Weapons/Guns/Gunshots/sniper.ogg
   - type: BallisticAmmoProvider
-    capacity: 5
+    capacity: 5 # Funky Cut in half adjusting for bolt action + fire rate
     proto: CartridgeLightRifle
     whitelist:
       tags:
       - CartridgeLightRifle
-  - type: Appearance
-  - type: SolutionContainerVisuals
-    maxFillLevels: 1
-    fillBaseName: base
-    inHandsFillBaseName: -fill-
-    inHandsMaxFillLevels: 1
-    equippedFillBaseName: -fill-
-    equippedMaxFillLevels: 1
   - type: MeleeWeapon
-    wideAnimationRotation: -135
+    wideAnimationRotation: -90
     damage:
       types:
         Piercing: 12
