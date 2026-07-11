@@ -98,13 +98,18 @@ public sealed class BreechLoadedSystem : EntitySystem
 
     private void OnInteractUsing(Entity<BreechLoadedComponent> gun, ref InteractUsingEvent args)
     {
-        if (gun.Comp.Open ||
-            !TryComp(gun.Owner, out BallisticAmmoProviderComponent? ammoProviderComponent) ||
-            ammoProviderComponent.Whitelist == null ||
-            ammoProviderComponent.Whitelist.Tags == null ||
-            !_tagSystem.HasAnyTag(args.Used, ammoProviderComponent.Whitelist.Tags))
-            return;
+        // Funky Commenting this out as its not needed right now (lack of other RMC code) and causes ammo deletion upon reload attempts.
+        // if (gun.Comp.Open ||
+        //     !TryComp(gun.Owner, out BallisticAmmoProviderComponent? ammoProviderComponent) ||
+        //     ammoProviderComponent.Whitelist == null ||
+        //     ammoProviderComponent.Whitelist.Tags == null ||
+        //     !_tagSystem.HasAnyTag(args.Used, ammoProviderComponent.Whitelist.Tags))
+        //     return;
 
+        // Funky Moved popup code here with a simple breech closed = send popup function.
+        // This prevents the ammo deletion since it just halts the loading attempt altogether.
+        if (gun.Comp.Open)
+            return;
         _popupSystem.PopupClient(Loc.GetString("rmc-breech-loaded-closed-load-attempt"), args.User, args.User);
         args.Handled = true;
     }
