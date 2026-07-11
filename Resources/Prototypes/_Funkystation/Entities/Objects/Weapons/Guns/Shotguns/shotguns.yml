@@ -1,0 +1,99 @@
+- type: entity
+  name: double-barreled shotgun
+  parent: [BaseWeaponShotgun, BaseGunWieldable, BaseSecurityBartenderContraband]
+  id: FuWeaponShotgunDoubleBarreled
+  description: An immortal classic. Uses .50 shotgun shells.
+  components:
+  - type: Sprite
+    sprite: Objects/Weapons/Guns/Shotguns/db_shotgun.rsi
+  - type: Item
+    sprite: Objects/Weapons/Guns/Shotguns/db_shotgun_inhands_64x.rsi
+  - type: BreechLoaded
+    openSound:
+      path: "/Audio/_RMC14/Weapons/Guns/Breech/pkd_open_chamber.ogg"
+    closeSound:
+      path: "/Audio/_RMC14/Weapons/Guns/Breech/pkd_close_chamber.ogg"
+  - type: GunRequiresWield #remove when inaccuracy on spreads is fixed
+  - type: Gun
+    fireRate: 3
+  - type: GunSpreadModifier
+    spread: 0.6
+  - type: BallisticAmmoProvider
+    capacity: 2
+  - type: Construction
+    graph: ShotgunSawn
+    node: start
+    deconstructionTarget: null
+
+- type: entity
+  name: double-barreled shotgun
+  parent: FuWeaponShotgunDoubleBarreled
+  id: FuWeaponShotgunDoubleBarreledRubber
+  description: An immortal classic. Uses .50 shotgun shells.
+  suffix: Non-Lethal
+  components:
+  - type: BallisticAmmoProvider
+    proto: ShellShotgunBeanbag
+
+- type: entity
+  name: Kammerer
+  parent: [BaseWeaponShotgun, BaseGunWieldable, BaseSecurityContraband]
+  id: FuWeaponShotgunKammerer
+  description: An old yet faithful design, and a favorite among irregular forces of many worlds. Uses .50 shotgun shells.
+  components: # intend for Kammerer to have tighter choke for slower fire rate and/or manual cycling
+  - type: Item
+    sprite: Objects/Weapons/Guns/Shotguns/pump_inhands_64x.rsi
+  - type: Sprite
+    sprite: Objects/Weapons/Guns/Shotguns/pump.rsi
+  - type: Clothing
+    sprite: Objects/Weapons/Guns/Shotguns/pump.rsi
+  - type: PumpAction
+  - type: GunRequiresWield #remove when inaccuracy on spreads is fixed
+  - type: Gun
+    fireRate: 1
+  - type: GunSpreadModifier
+    spread: 0.6
+  - type: Tag
+    tags:
+    - WeaponShotgunKammerer
+
+- type: entity
+  name: sawn-off shotgun
+  parent: [ BaseWeaponShotgun, BaseSecurityBartenderContraband ]
+  id: FuWeaponShotgunSawn
+  description: Groovy! Uses .50 shotgun shells.
+  components: # needs to be super inaccurate because you don't need to wield it
+  - type: Sprite
+    sprite: Objects/Weapons/Guns/Shotguns/sawn.rsi
+  - type: Clothing
+    sprite: Objects/Weapons/Guns/Shotguns/sawn.rsi
+  - type: Item
+    size: Small
+    shape:
+    - 0,0,2,0
+    sprite: Objects/Weapons/Guns/Shotguns/sawn_inhands_64x.rsi
+  - type: BreechLoaded
+  - type: Gun
+    fireRate: 3
+  - type: GunSpreadModifier
+    spread: 1.4
+  - type: BallisticAmmoProvider
+    capacity: 2
+  - type: Construction
+    graph: ShotgunSawn
+    node: shotgunsawn
+    deconstructionTarget: null
+
+- type: entity
+  name: sawn-off shotgun
+  parent: FuWeaponShotgunSawn
+  id: FuWeaponShotgunSawnEmpty
+  description: Groovy! Uses .50 shotgun shells.
+  suffix: Empty
+  components:
+  - type: BallisticAmmoProvider
+    proto: null
+  - type: Construction
+    graph: ShotgunSawn
+    node: shotgunsawn
+    deconstructionTarget: null
