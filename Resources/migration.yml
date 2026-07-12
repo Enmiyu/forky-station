@@ -1181,5 +1181,5 @@ JanitorServiceLight: null
 WeaponSniperMosin: FuWeaponSniperMosin
 WeaponShotgunKammerer: FuWeaponShotgunKammerer
 WeaponShotgunDoubleBarreled: FuWeaponShotgunDoubleBarreled
-WeaponShotgunSawn: FuWeaponShotgunDoubleBarreled
+WeaponShotgunSawn: FuWeaponShotgunSawn
 WeaponLauncherChinaLake: FuWeaponLauncherChinaLake

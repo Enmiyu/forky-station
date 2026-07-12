@@ -3,6 +3,7 @@
   parent: [BaseWeaponShotgun, BaseGunWieldable, BaseSecurityBartenderContraband]
   id: FuWeaponShotgunDoubleBarreled
   description: An immortal classic. Uses .50 shotgun shells.
+  suffix: Funky
   components:
   - type: Sprite
     sprite: _Funkystation/Objects/Weapons/Guns/Shotguns/db_shotgun.rsi
@@ -35,7 +36,7 @@
   - type: BallisticAmmoProvider
     capacity: 2
   - type: Construction
-    graph: ShotgunSawn
+    graph: FuShotgunSawn
     node: start
     deconstructionTarget: null
 
@@ -44,7 +45,7 @@
   parent: FuWeaponShotgunDoubleBarreled
   id: FuWeaponShotgunDoubleBarreledRubber
   description: An immortal classic. Uses .50 shotgun shells.
-  suffix: Non-Lethal
+  suffix: Non-Lethal, Funky
   components:
   - type: BallisticAmmoProvider
     proto: ShellShotgunBeanbag
@@ -54,6 +55,7 @@
   parent: [BaseWeaponShotgun, BaseGunWieldable, BaseSecurityContraband]
   id: FuWeaponShotgunKammerer
   description: An old yet faithful design, and a favorite among irregular forces of many worlds. Uses .50 shotgun shells.
+  suffix: Funky
   components: # intend for Kammerer to have tighter choke for slower fire rate and/or manual cycling
   - type: Item
     sprite: Objects/Weapons/Guns/Shotguns/pump_inhands_64x.rsi
@@ -76,6 +78,7 @@
   parent: [ BaseWeaponShotgun, BaseSecurityBartenderContraband ]
   id: FuWeaponShotgunSawn
   description: Groovy! Uses .50 shotgun shells.
+  suffix: Funky
   components: # needs to be super inaccurate because you don't need to wield it
   - type: Sprite
     sprite: _Funkystation/Objects/Weapons/Guns/Shotguns/sawn.rsi
@@ -107,8 +110,8 @@
   - type: BallisticAmmoProvider
     capacity: 2
   - type: Construction
-    graph: ShotgunSawn
-    node: shotgunsawn
+    graph: FuShotgunSawn
+    node: fushotgunsawn
     deconstructionTarget: null
 
 - type: entity
@@ -116,11 +119,11 @@
   parent: FuWeaponShotgunSawn
   id: FuWeaponShotgunSawnEmpty
   description: Groovy! Uses .50 shotgun shells.
-  suffix: Empty
+  suffix: Empty, Funky
   components:
   - type: BallisticAmmoProvider
     proto: null
   - type: Construction
-    graph: ShotgunSawn
-    node: shotgunsawn
+    graph: FuShotgunSawn
+    node: fushotgunsawn
     deconstructionTarget: null
