@@ -2,8 +2,7 @@
   name: double-barreled shotgun
   parent: [BaseWeaponShotgun, BaseGunWieldable, BaseSecurityBartenderContraband]
   id: FuWeaponShotgunDoubleBarreled
-  description: An immortal classic. Uses .50 shotgun shells.
-  suffix: Funky
+  description: An immortal classic. Uses 12 gauge shotgun shells.
   components:
   - type: Sprite
     sprite: _Funkystation/Objects/Weapons/Guns/Shotguns/db_shotgun.rsi
@@ -44,8 +43,8 @@
   name: double-barreled shotgun
   parent: FuWeaponShotgunDoubleBarreled
   id: FuWeaponShotgunDoubleBarreledRubber
-  description: An immortal classic. Uses .50 shotgun shells.
-  suffix: Non-Lethal, Funky
+  description: An immortal classic. Uses 12 gauge shotgun shells.
+  suffix: Non-Lethal
   components:
   - type: BallisticAmmoProvider
     proto: ShellShotgunBeanbag
@@ -54,8 +53,7 @@
   name: Kammerer
   parent: [BaseWeaponShotgun, BaseGunWieldable, BaseSecurityContraband]
   id: FuWeaponShotgunKammerer
-  description: An old yet faithful design, and a favorite among irregular forces of many worlds. Uses .50 shotgun shells.
-  suffix: Funky
+  description: An old yet faithful design, and a favorite among irregular forces of many worlds. Uses 12 gauge shotgun shells.
   components: # intend for Kammerer to have tighter choke for slower fire rate and/or manual cycling
   - type: Item
     sprite: Objects/Weapons/Guns/Shotguns/pump_inhands_64x.rsi
@@ -77,8 +75,7 @@
   name: sawn-off shotgun
   parent: [ BaseWeaponShotgun, BaseSecurityBartenderContraband ]
   id: FuWeaponShotgunSawn
-  description: Groovy! Uses .50 shotgun shells.
-  suffix: Funky
+  description: Groovy! Uses 12 gauge shotgun shells.
   components: # needs to be super inaccurate because you don't need to wield it
   - type: Sprite
     sprite: _Funkystation/Objects/Weapons/Guns/Shotguns/sawn.rsi
@@ -118,8 +115,8 @@
   name: sawn-off shotgun
   parent: FuWeaponShotgunSawn
   id: FuWeaponShotgunSawnEmpty
-  description: Groovy! Uses .50 shotgun shells.
-  suffix: Empty, Funky
+  description: Groovy! Uses 12 gauge shotgun shells.
+  suffix: Empty
   components:
   - type: BallisticAmmoProvider
     proto: null

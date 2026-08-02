@@ -3,7 +3,6 @@
   parent: [BaseWeaponLauncher, BaseSyndicateContraband]
   id: FuWeaponLauncherChinaLake
   description: PLOOP.
-  suffix: Funky
   components:
   - type: Sprite
     sprite: Objects/Weapons/Guns/Launchers/china_lake.rsi
@@ -32,4 +31,3 @@
   - type: GunRequiresWield
   - type: StaticPrice
     price: 10000
-
