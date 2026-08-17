@@ -9,6 +9,9 @@
     layers:
     - state: base
       map: ["enum.BreechVisuals.Open"]
+    - state: base1
+      map: [ "enum.SolutionContainerLayers.Fill" ]
+      visible: true
   - type: Clothing
     sprite: _Funkystation/Objects/Weapons/Guns/Snipers/bolt_gun_wood.rsi
     quickEquip: false
@@ -22,6 +25,13 @@
     closeSound:
       path: "/Audio/_RMC14/Weapons/Guns/Breech/pkd_close_chamber.ogg"
   - type: Appearance
+  - type: SolutionContainerVisuals
+    maxFillLevels: 1
+    fillBaseName: base
+    inHandsFillBaseName: -fill-
+    inHandsMaxFillLevels: 1
+    equippedFillBaseName: -fill-
+    equippedMaxFillLevels: 1
   - type: GenericVisualizer
     visuals:
       enum.BreechVisuals.Open:
