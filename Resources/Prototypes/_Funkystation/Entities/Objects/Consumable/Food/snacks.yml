@@ -1,6 +1,6 @@
 - type: entity
   parent: [ BaseStorageItem, ReagentPacket ]
-  id: FoodCerealGorillaCrunch # Cereal doesnt strictly fit into the existing categories but its close enough to being a snack.
+  id: FuFoodCerealGorillaCrunch # Cereal doesnt strictly fit into the existing categories but its close enough to being a snack.
   name: gorilla crunch
   description: Tap into your primal side!
   components:
@@ -33,12 +33,12 @@
   - type: Solution
     solution:
       reagents:
-      - ReagentId: GorillaCrunch
+      - ReagentId: FuGorillaCrunch
         Quantity: 120 # Lets you get 3 bowls if you dont eat any
 
 - type: entity
   parent: FoodBowlBase
-  id: FoodBowlGorillaCrunch
+  id: FuFoodBowlGorillaCrunch
   name: gorilla crunch bowl
   description: For when you REALLY need to make some gains. Made with 100% organic gorilla!
   components:
@@ -49,7 +49,7 @@
   - type: Solution
     solution:
       reagents:
-      - ReagentId: GorillaCrunch
+      - ReagentId: FuGorillaCrunch
         Quantity: 40
       - ReagentId: Milk
         Quantity: 10

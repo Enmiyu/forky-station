@@ -1,10 +1,10 @@
 - type: microwaveMealRecipe
-  id: RecipeGorillaCrunchBowl
+  id: FuRecipeGorillaCrunchBowl
   name: gorilla crunch bowl recipe
-  result: FoodBowlGorillaCrunch
+  result: FuFoodBowlGorillaCrunch
   time: 10
   reagents:
-    GorillaCrunch: 40 # i have to fucking microwave cereal i hate it here
+    FuGorillaCrunch: 40 # i have to fucking microwave cereal i hate it here
     Milk: 10
   solids:
     FoodBowlBig: 1
