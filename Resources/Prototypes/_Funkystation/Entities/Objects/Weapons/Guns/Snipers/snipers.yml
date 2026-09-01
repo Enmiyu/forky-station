@@ -11,7 +11,7 @@
       map: ["enum.BreechVisuals.Open"]
     - state: base1
       map: [ "enum.SolutionContainerLayers.Fill" ]
-      visible: true
+      visible: false
   - type: Clothing
     sprite: _Funkystation/Objects/Weapons/Guns/Snipers/bolt_gun_wood.rsi
     quickEquip: false
@@ -72,7 +72,7 @@
   - type: SolutionTransfer
     maxTransferAmount: 2
   - type: Tool
-    qualities: Slicing
+    qualities: [ Slicing ]
     speedModifier: 0.5 #It's a bayonet
   - type: GunRequiresWield
   - type: StaticPrice
