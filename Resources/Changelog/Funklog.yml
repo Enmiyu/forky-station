@@ -859,4 +859,33 @@
   id: 100
   time: '2026-09-21T18:30:45Z'
   url: https://github.com/funky-station/forky-station/pull/330
+- author: mkanke, ratsmageddon, Tea
+  changes:
+  - message: Added Evidence room sign, Evidence bag, and several prefilled evidence
+      containers for mappers
+    type: Add
+  id: 101
+  time: '2026-09-22T15:34:47Z'
+  url: https://github.com/funky-station/forky-station/pull/293
+- author: feymild
+  changes:
+  - message: Gave non-oxygen breathing prisoners gas they need on round start
+    type: Fix
+  id: 102
+  time: '2026-09-22T16:40:17Z'
+  url: https://github.com/funky-station/forky-station/pull/469
+- author: mkanke
+  changes:
+  - message: Added 5 prefilled cardboard boxes for mappers
+    type: Add
+  id: 103
+  time: '2026-09-23T07:35:58Z'
+  url: https://github.com/funky-station/forky-station/pull/335
+- author: mkanke
+  changes:
+  - message: Adds Cops and Robbers crate to cargo order console
+    type: Add
+  id: 104
+  time: '2026-09-23T08:01:25Z'
+  url: https://github.com/funky-station/forky-station/pull/276
 Order: -1
